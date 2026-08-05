@@ -1,12 +1,16 @@
 {
   "name": "Mastra Prompt-to-Game",
+
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
 
   "features": {
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
 
-  "forwardPorts": [4111, 5173],
+  "forwardPorts": [
+    4111,
+    5173
+  ],
 
   "portsAttributes": {
     "4111": {
@@ -15,13 +19,15 @@
       "visibility": "private"
     },
     "5173": {
-      "label": "Game preview",
+      "label": "Application",
       "onAutoForward": "openPreview",
       "visibility": "private"
     }
   },
 
-  "postCreateCommand": "corepack enable && pnpm install && pnpm exec playwright install chromium",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "postStartCommand": "corepack enable",
 
   "customizations": {
     "vscode": {
@@ -35,15 +41,20 @@
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true,
         "files.exclude": {
           "**/.mastra": true,
-          "**/dist": true
+          "**/dist": true,
+          "**/playwright-report": true,
+          "**/test-results": true
         }
       }
     }
   },
 
-  "remoteEnv": {
+  "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096"
-  }
+  },
+
+  "remoteUser": "node"
 }
