@@ -1,0 +1,13 @@
+{
+  "title": "Évasion de météorites",
+  "theme": "space",
+  "playerColor": "#4fd1c5",
+  "backgroundColor": "#0b1021",
+  "obstacleColor": "#f56565",
+  "playerSpeed": 220,
+  "obstacleSpeed": 160,
+  "obstacleSpawnIntervalMs": 700,
+  "gameDurationSeconds": 30,
+  "victoryMessage": "Vaisseau sauvé !",
+  "defeatMessage": "Vaisseau détruit..."
+}
