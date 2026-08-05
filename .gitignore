@@ -1,0 +1,8 @@
+
+.env
+.env.local
+.claude/settings.local.json
+.mastra/
+dist/
+test-results/
+playwright-report/

@@ -1,0 +1,17 @@
+{
+	"devDependencies": {
+		"@playwright/test": "^1.62.1",
+		"prettier": "^3.9.6"
+	},
+	"scripts": {
+		"dev": "mastra dev",
+		"build": "mastra build",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:e2e": "playwright test",
+		"lint": "eslint .",
+		"format": "prettier --write .",
+		"check": "pnpm typecheck && pnpm test && pnpm build"
+	}
+}

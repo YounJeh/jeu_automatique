@@ -1,0 +1,49 @@
+{
+  "name": "Mastra Prompt-to-Game",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+
+  "forwardPorts": [4111, 5173],
+
+  "portsAttributes": {
+    "4111": {
+      "label": "Mastra",
+      "onAutoForward": "notify",
+      "visibility": "private"
+    },
+    "5173": {
+      "label": "Game preview",
+      "onAutoForward": "openPreview",
+      "visibility": "private"
+    }
+  },
+
+  "postCreateCommand": "corepack enable && pnpm install && pnpm exec playwright install chromium",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "vitest.explorer",
+        "ms-playwright.playwright"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "files.exclude": {
+          "**/.mastra": true,
+          "**/dist": true
+        }
+      }
+    }
+  },
+
+  "remoteEnv": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  }
+}
