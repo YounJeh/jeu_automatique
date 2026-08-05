@@ -28,18 +28,3 @@ export function initGameSelector({
   const first = items[0];
   if (first) onSelect(first);
 }
-
-export function addSelectorOption(
-  select: HTMLSelectElement,
-  item: GameCatalogItem,
-): void {
-  const existing = Array.from(select.options).find(
-    (option) => option.value === item.id,
-  );
-  if (existing) return;
-
-  const option = document.createElement("option");
-  option.value = item.id;
-  option.textContent = `${item.title} (${item.template})`;
-  select.append(option);
-}
