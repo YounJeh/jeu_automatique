@@ -2,7 +2,10 @@ import type { GameStatus } from "./core/game-state.js";
 import { InputController } from "./core/input.js";
 import type { GameCatalogItem } from "./types/game-catalog-item.js";
 import { DodgeEngine } from "./templates/dodge/dodge-engine.js";
-import { DodgeRenderer } from "./templates/dodge/dodge-renderer.js";
+import {
+  DodgeRenderer,
+  type DodgeSprites,
+} from "./templates/dodge/dodge-renderer.js";
 import { CollectEngine } from "./templates/collect/collect-engine.js";
 import { CollectRenderer } from "./templates/collect/collect-renderer.js";
 
@@ -38,8 +41,12 @@ export class GameController {
 
     switch (item.config.template) {
       case "dodge": {
+        const sprites: DodgeSprites | undefined =
+          item.source === "generated"
+            ? { player: "🐩", obstacle: "🐺" }
+            : undefined;
         const engine = new DodgeEngine(item.config);
-        const renderer = new DodgeRenderer(this.canvas, item.config);
+        const renderer = new DodgeRenderer(this.canvas, item.config, sprites);
         this.active = { template: "dodge", engine, renderer };
         break;
       }

@@ -52,6 +52,16 @@ export class DodgeRenderer {
   }
 
   private drawPlayer(state: DodgeEngineState): void {
+    if (this.sprites) {
+      this.drawSprite(
+        this.sprites.player,
+        state.player.x,
+        state.player.y,
+        DODGE_PLAYER_SIZE,
+      );
+      return;
+    }
+
     this.ctx.fillStyle = this.config.playerColor;
     this.ctx.fillRect(
       state.player.x,
@@ -62,6 +72,18 @@ export class DodgeRenderer {
   }
 
   private drawObstacles(state: DodgeEngineState): void {
+    if (this.sprites) {
+      for (const obstacle of state.obstacles) {
+        this.drawSprite(
+          this.sprites.obstacle,
+          obstacle.x,
+          obstacle.y,
+          DODGE_OBSTACLE_SIZE,
+        );
+      }
+      return;
+    }
+
     this.ctx.fillStyle = this.config.obstacleColor;
     for (const obstacle of state.obstacles) {
       this.ctx.fillRect(
@@ -71,6 +93,15 @@ export class DodgeRenderer {
         DODGE_OBSTACLE_SIZE,
       );
     }
+  }
+
+  private drawSprite(emoji: string, x: number, y: number, size: number): void {
+    this.ctx.font = `${size}px sans-serif`;
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(emoji, x + size / 2, y + size / 2);
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "alphabetic";
   }
 
   private drawScore(state: DodgeEngineState): void {
