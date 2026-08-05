@@ -5,27 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jeu automatique</title>
     <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        padding: 16px;
-        background: #05070f;
-        font-family: system-ui, sans-serif;
-        color: #ffffff;
+      :root {
+        color-scheme: dark;
+        --bg-app: #05070f;
+        --bg-sidebar: #14161f;
+        --bg-main: #0b0d17;
+        --bg-panel: #191c29;
+        --bg-panel-raised: #21243333;
+        --border-subtle: #ffffff1a;
+        --text-primary: #f5f5f7;
+        --text-muted: #ffffffa6;
+        --accent: #4fd1c5;
+        --accent-contrast: #05070f;
+        --danger: #f56565;
+      }
+
+      * {
         box-sizing: border-box;
       }
 
-      select,
-      button {
-        padding: 8px 20px;
-        font-size: 16px;
-        border-radius: 6px;
-        border: none;
+      body {
+        margin: 0;
+        height: 100vh;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        color: var(--text-primary);
+        background: var(--bg-app);
+        overflow: hidden;
+      }
+
+      button,
+      textarea {
         font-family: inherit;
+        color: inherit;
       }
 
       button {
@@ -37,15 +52,136 @@
         cursor: not-allowed;
       }
 
-      canvas {
-        border: 2px solid #ffffff33;
-        border-radius: 8px;
+      [hidden] {
+        display: none !important;
       }
 
-      #game-description {
-        max-width: 480px;
-        text-align: center;
-        color: #ffffffcc;
+      #app-shell {
+        display: flex;
+        height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 272px;
+        flex-shrink: 0;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        padding: 16px 12px;
+        gap: 12px;
+        overflow-y: auto;
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px 8px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .sidebar-create-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-subtle);
+        background: transparent;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        text-align: left;
+        transition: background 0.15s ease;
+      }
+
+      .sidebar-create-button:hover {
+        background: var(--bg-panel);
+      }
+
+      .sidebar-section-label {
+        margin-top: 8px;
+        padding: 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+      }
+
+      .game-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .game-list__item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        padding: 9px 10px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-primary);
+        font-size: 14px;
+        text-align: left;
+        transition: background 0.15s ease;
+      }
+
+      .game-list__item:hover {
+        background: var(--bg-panel);
+      }
+
+      .game-list__item--active {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--accent);
+      }
+
+      .game-list__title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .game-list__badge {
+        flex-shrink: 0;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        border: 1px solid var(--border-subtle);
+        border-radius: 999px;
+        padding: 2px 7px;
+      }
+
+      /* Main content */
+      .main-content {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        background: var(--bg-main);
+      }
+
+      .view {
+        height: 100%;
+      }
+
+      /* Play view */
+      #play-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 24px 16px;
       }
 
       .controls {
@@ -54,27 +190,237 @@
         align-items: center;
       }
 
-      #play-section {
+      #restart-button {
+        padding: 8px 20px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: none;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        font-weight: 600;
+      }
+
+      #game-description {
+        max-width: 480px;
+        text-align: center;
+        color: var(--text-muted);
+      }
+
+      canvas {
+        border: 2px solid var(--border-subtle);
+        border-radius: 8px;
+      }
+
+      /* Create view */
+      #create-view {
         display: flex;
         flex-direction: column;
+        max-width: 720px;
+        margin: 0 auto;
+        height: 100%;
+        padding: 20px 24px;
+      }
+
+      .create-header {
+        display: flex;
         align-items: center;
         gap: 12px;
-        width: 100%;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        flex-shrink: 0;
+      }
+
+      #back-to-games-button {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border-subtle);
+        background: transparent;
+        font-size: 13px;
+      }
+
+      #back-to-games-button:hover {
+        background: var(--bg-panel);
+      }
+
+      .create-header h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px 4px;
+      }
+
+      .chat-message {
+        display: flex;
+        max-width: 85%;
+      }
+
+      .chat-message--user {
+        align-self: flex-end;
+        justify-content: flex-end;
+      }
+
+      .chat-message--assistant {
+        align-self: flex-start;
+      }
+
+      .chat-message__bubble {
+        margin: 0;
+        padding: 10px 14px;
+        border-radius: 12px;
+        line-height: 1.4;
+        font-size: 14px;
+        white-space: pre-wrap;
+      }
+
+      .chat-message--user .chat-message__bubble {
+        background: var(--accent);
+        color: var(--accent-contrast);
+      }
+
+      .chat-message--assistant .chat-message__bubble {
+        background: var(--bg-panel);
+        color: var(--text-primary);
+      }
+
+      .generation-status {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        background: var(--bg-panel);
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      .generation-status--error {
+        color: var(--danger);
+      }
+
+      .chat-form {
+        flex-shrink: 0;
+        display: flex;
+        gap: 8px;
+        padding-top: 8px;
+      }
+
+      #chat-input {
+        flex: 1;
+        resize: none;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-panel);
+        font-size: 14px;
+      }
+
+      #chat-send-button {
+        padding: 0 18px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .generation-result {
+        flex-shrink: 0;
+        margin-top: 12px;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #generation-summary {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-primary);
+      }
+
+      #test-game-button {
+        align-self: flex-start;
+        padding: 8px 18px;
+        border-radius: 6px;
+        border: none;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        font-weight: 600;
+        font-size: 14px;
       }
     </style>
   </head>
   <body>
-    <section id="play-section">
-      <div class="controls">
-        <label for="game-select">Jeu :</label>
-        <select id="game-select"></select>
-        <button id="restart-button" type="button">Recommencer</button>
-      </div>
-      <h1 id="game-title"></h1>
-      <p id="game-description"></p>
-      <canvas id="game-canvas"></canvas>
-      <p id="game-status"></p>
-    </section>
+    <div id="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">🎮 Jeu automatique</div>
+        <button
+          id="create-game-button"
+          class="sidebar-create-button"
+          type="button"
+        >
+          + Créer un jeu
+        </button>
+        <div class="sidebar-section-label">Jeux disponibles</div>
+        <ul id="game-list" class="game-list"></ul>
+      </aside>
+
+      <main class="main-content">
+        <section id="play-view" class="view">
+          <div class="controls">
+            <button id="restart-button" type="button">Recommencer</button>
+          </div>
+          <h1 id="game-title"></h1>
+          <p id="game-description"></p>
+          <canvas id="game-canvas"></canvas>
+          <p id="game-status"></p>
+        </section>
+
+        <section id="create-view" class="view" hidden>
+          <header class="create-header">
+            <button id="back-to-games-button" type="button">
+              ← Retour aux jeux
+            </button>
+            <h1>Créer un jeu</h1>
+          </header>
+
+          <div
+            id="chat-history"
+            class="chat-history"
+            role="log"
+            aria-live="polite"
+          ></div>
+
+          <div id="generation-status" class="generation-status" hidden></div>
+
+          <form id="chat-form" class="chat-form">
+            <textarea
+              id="chat-input"
+              rows="2"
+              placeholder="Décris le jeu que tu veux créer..."
+            ></textarea>
+            <button id="chat-send-button" type="submit">Envoyer</button>
+          </form>
+
+          <div id="generation-result" class="generation-result" hidden>
+            <p id="generation-summary"></p>
+            <button id="test-game-button" type="button" disabled>
+              Tester le jeu
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <script type="module" src="./dist/app/index.js"></script>
   </body>

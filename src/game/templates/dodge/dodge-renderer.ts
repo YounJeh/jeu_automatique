@@ -7,11 +7,21 @@ import {
   DODGE_PLAYER_SIZE,
 } from "./dodge-config.js";
 
+export type DodgeSprites = {
+  player: string;
+  obstacle: string;
+};
+
 export class DodgeRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly config: DodgeGameConfig;
+  private readonly sprites: DodgeSprites | undefined;
 
-  constructor(canvas: HTMLCanvasElement, config: DodgeGameConfig) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    config: DodgeGameConfig,
+    sprites?: DodgeSprites,
+  ) {
     canvas.width = DODGE_CANVAS_WIDTH;
     canvas.height = DODGE_CANVAS_HEIGHT;
 
@@ -22,6 +32,7 @@ export class DodgeRenderer {
 
     this.ctx = ctx;
     this.config = config;
+    this.sprites = sprites;
   }
 
   draw(state: DodgeEngineState): void {
