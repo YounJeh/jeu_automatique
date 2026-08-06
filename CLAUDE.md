@@ -1343,3 +1343,15 @@ Ne pas complexifier l’architecture pour anticiper des besoins futurs non confi
 8. Une nouvelle catégorie de jeu ne doit pas être ajoutée sans définition de template, schéma Zod, contrôle de jouabilité et tests.
 9. Aucun `any`, aucun secret côté client, aucun accès direct au modèle depuis le frontend.
 10. Claude doit privilégier les modifications minimales et ne pas refactorer du code sans rapport avec la tâche.
+
+## 36. Git workflow
+
+- Implement the plan one validated task at a time.
+- After each atomic task:
+  1. run the relevant tests;
+  2. verify the acceptance criteria;
+  3. stop for human validation when required;
+  4. create a conventional commit only after approval.
+- Never commit failing or incomplete code.
+- Keep commits atomic and independently understandable.
+- Do not push unless explicitly requested.
