@@ -1230,9 +1230,9 @@ Claude Code doit procéder dans cet ordre.
 
 - créer ou faire évoluer `gameDesignerAgent` ;
 - créer le workflow ;
-- ajouter la sélection de template ;
-- ajouter la génération structurée ;
-- ajouter la sauvegarde ;
+- créer ou faire évoluer la sélection de template ;
+- créer ou faire évoluer la génération structurée ;
+- créer ou faire évoluer la sauvegarde ;
 - retourner un résultat validé.
 
 ### Étape 5 — Connexion frontend/backend

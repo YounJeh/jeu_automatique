@@ -8,3 +8,12 @@ export const gameConfigSchema = z.discriminatedUnion("template", [
 ]);
 
 export type GameConfig = z.infer<typeof gameConfigSchema>;
+
+export const generatedGameResultSchema = z.object({
+  game: gameConfigSchema,
+  summary: z.string().min(1),
+  generationId: z.string().min(1),
+  createdAt: z.string(),
+});
+
+export type GeneratedGameResult = z.infer<typeof generatedGameResultSchema>;
