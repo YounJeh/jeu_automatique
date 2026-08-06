@@ -4,34 +4,34 @@
 
 Ce projet est une application Web légère permettant :
 
-* de sélectionner et jouer à plusieurs mini-jeux ;
-* de tester plusieurs templates de jeux existants ;
-* d’ouvrir un chat intégré à l’application ;
-* de demander à un système agentique de créer une nouvelle variante de jeu ;
-* de tester immédiatement le jeu généré dans le navigateur.
+- de sélectionner et jouer à plusieurs mini-jeux ;
+- de tester plusieurs templates de jeux existants ;
+- d’ouvrir un chat intégré à l’application ;
+- de demander à un système agentique de créer une nouvelle variante de jeu ;
+- de tester immédiatement le jeu généré dans le navigateur.
 
 Le système utilise :
 
-* TypeScript ;
-* Mastra ;
-* un modèle de langage appelé par API ;
-* HTML5 Canvas pour afficher les jeux ;
-* Zod pour valider les données structurées ;
-* Vitest pour les tests unitaires ;
-* Playwright pour les tests end-to-end ;
-* un frontend Web léger.
+- TypeScript ;
+- Mastra ;
+- un modèle de langage appelé par API ;
+- HTML5 Canvas pour afficher les jeux ;
+- Zod pour valider les données structurées ;
+- Vitest pour les tests unitaires ;
+- Playwright pour les tests end-to-end ;
+- un frontend Web léger.
 
 Le projet doit rester léger et fonctionner dans GitHub Codespaces et sur une machine peu puissante.
 
 Ne jamais ajouter sans demande explicite :
 
-* de modèle d’IA local ;
-* de moteur de jeu lourd ;
-* de base vectorielle ;
-* de base de données complexe ;
-* de framework multi-agent supplémentaire ;
-* d’infrastructure cloud distribuée ;
-* de génération libre de code non contrôlée.
+- de modèle d’IA local ;
+- de moteur de jeu lourd ;
+- de base vectorielle ;
+- de base de données complexe ;
+- de framework multi-agent supplémentaire ;
+- d’infrastructure cloud distribuée ;
+- de génération libre de code non contrôlée.
 
 Mastra doit rester l’unique framework agentique du projet.
 
@@ -68,11 +68,11 @@ Le système ne doit pas générer librement une application complète.
 
 Le modèle d’IA doit principalement :
 
-* choisir un template existant ;
-* produire une configuration structurée ;
-* adapter les paramètres autorisés ;
-* valider la cohérence du jeu ;
-* enregistrer la nouvelle configuration dans le catalogue de jeux.
+- choisir un template existant ;
+- produire une configuration structurée ;
+- adapter les paramètres autorisés ;
+- valider la cohérence du jeu ;
+- enregistrer la nouvelle configuration dans le catalogue de jeux.
 
 ---
 
@@ -80,31 +80,31 @@ Le modèle d’IA doit principalement :
 
 La version actuelle doit contenir au minimum :
 
-* une page principale ;
-* une liste déroulante de sélection de jeu ;
-* deux jeux de test préconfigurés ;
-* un bouton permettant de lancer le jeu sélectionné ;
-* un bouton permettant de recommencer ;
-* une option permettant d’ouvrir le chat ;
-* une interface de chat simple ;
-* un système Mastra capable de transformer une demande en configuration de jeu ;
-* un écran ou un état de génération ;
-* un bouton permettant de tester le jeu généré ;
-* un catalogue de jeux chargé dynamiquement.
+- une page principale ;
+- une liste déroulante de sélection de jeu ;
+- deux jeux de test préconfigurés ;
+- un bouton permettant de lancer le jeu sélectionné ;
+- un bouton permettant de recommencer ;
+- une option permettant d’ouvrir le chat ;
+- une interface de chat simple ;
+- un système Mastra capable de transformer une demande en configuration de jeu ;
+- un écran ou un état de génération ;
+- un bouton permettant de tester le jeu généré ;
+- un catalogue de jeux chargé dynamiquement.
 
 La version actuelle ne doit pas contenir :
 
-* de génération d’images ;
-* de génération audio ;
-* de génération libre de TypeScript ;
-* de génération de nouveaux moteurs de jeu ;
-* de multijoueur ;
-* de système de compte ;
-* de paiement ;
-* de base vectorielle ;
-* de mémoire long terme ;
-* de marketplace publique ;
-* de déploiement distribué.
+- de génération d’images ;
+- de génération audio ;
+- de génération libre de TypeScript ;
+- de génération de nouveaux moteurs de jeu ;
+- de multijoueur ;
+- de système de compte ;
+- de paiement ;
+- de base vectorielle ;
+- de mémoire long terme ;
+- de marketplace publique ;
+- de déploiement distribué.
 
 ---
 
@@ -126,28 +126,28 @@ Le joueur contrôle un carré ou un vaisseau en vue du dessus et doit éviter de
 
 ### Règles
 
-* Le joueur se déplace avec les flèches du clavier ou WASD.
-* Les obstacles apparaissent en haut de l’écran.
-* Les obstacles se déplacent vers le bas.
-* Le joueur perd lorsqu’il touche un obstacle.
-* Le score augmente avec le temps.
-* Le joueur gagne lorsqu’il atteint la durée définie.
-* Un bouton permet de recommencer.
+- Le joueur se déplace avec les flèches du clavier ou WASD.
+- Les obstacles apparaissent en haut de l’écran.
+- Les obstacles se déplacent vers le bas.
+- Le joueur perd lorsqu’il touche un obstacle.
+- Le score augmente avec le temps.
+- Le joueur gagne lorsqu’il atteint la durée définie.
+- Un bouton permet de recommencer.
 
 ### Paramètres personnalisables
 
-* titre ;
-* description ;
-* thème ;
-* couleur du joueur ;
-* couleur du fond ;
-* couleur des obstacles ;
-* vitesse du joueur ;
-* vitesse des obstacles ;
-* fréquence d’apparition des obstacles ;
-* durée de la partie ;
-* texte de victoire ;
-* texte de défaite.
+- titre ;
+- description ;
+- thème ;
+- couleur du joueur ;
+- couleur du fond ;
+- couleur des obstacles ;
+- vitesse du joueur ;
+- vitesse des obstacles ;
+- fréquence d’apparition des obstacles ;
+- durée de la partie ;
+- texte de victoire ;
+- texte de défaite.
 
 ---
 
@@ -165,28 +165,28 @@ Le joueur contrôle un personnage dans une zone fermée et doit collecter un cer
 
 ### Règles
 
-* Le joueur se déplace avec les flèches du clavier ou WASD.
-* Des objets sont répartis ou apparaissent dans la zone de jeu.
-* Un objet disparaît lorsqu’il est collecté.
-* Le score augmente à chaque collecte.
-* Le joueur gagne lorsqu’il atteint l’objectif de collecte.
-* Le joueur perd si le temps est écoulé avant l’objectif.
-* Un bouton permet de recommencer.
+- Le joueur se déplace avec les flèches du clavier ou WASD.
+- Des objets sont répartis ou apparaissent dans la zone de jeu.
+- Un objet disparaît lorsqu’il est collecté.
+- Le score augmente à chaque collecte.
+- Le joueur gagne lorsqu’il atteint l’objectif de collecte.
+- Le joueur perd si le temps est écoulé avant l’objectif.
+- Un bouton permet de recommencer.
 
 ### Paramètres personnalisables
 
-* titre ;
-* description ;
-* thème ;
-* couleur du joueur ;
-* couleur du fond ;
-* couleur des objets à collecter ;
-* vitesse du joueur ;
-* nombre d’objets à collecter ;
-* fréquence d’apparition des objets ;
-* durée de la partie ;
-* texte de victoire ;
-* texte de défaite.
+- titre ;
+- description ;
+- thème ;
+- couleur du joueur ;
+- couleur du fond ;
+- couleur des objets à collecter ;
+- vitesse du joueur ;
+- nombre d’objets à collecter ;
+- fréquence d’apparition des objets ;
+- durée de la partie ;
+- texte de victoire ;
+- texte de défaite.
 
 ---
 
@@ -196,8 +196,8 @@ L’interface doit contenir une liste déroulante affichant tous les jeux dispon
 
 Chaque option doit afficher au minimum :
 
-* le titre du jeu ;
-* éventuellement son type ou une courte description.
+- le titre du jeu ;
+- éventuellement son type ou une courte description.
 
 Le catalogue ne doit pas être codé directement dans le composant d’interface.
 
@@ -244,15 +244,15 @@ Il doit obligatoirement sélectionner un template existant.
 
 Chaque template doit disposer :
 
-* de son propre moteur ou contrôleur ;
-* de son propre schéma de configuration ;
-* de valeurs par défaut ;
-* de règles de validation ;
-* de tests unitaires ;
-* d’une fonction d’initialisation ;
-* d’une fonction de mise à jour ;
-* d’une fonction de rendu ;
-* d’une fonction de destruction ou de nettoyage.
+- de son propre moteur ou contrôleur ;
+- de son propre schéma de configuration ;
+- de valeurs par défaut ;
+- de règles de validation ;
+- de tests unitaires ;
+- d’une fonction d’initialisation ;
+- d’une fonction de mise à jour ;
+- d’une fonction de rendu ;
+- d’une fonction de destruction ou de nettoyage.
 
 ---
 
@@ -306,11 +306,11 @@ Créer un jeu
 
 L’interface peut utiliser :
 
-* deux boutons ;
-* deux onglets ;
-* une navigation latérale ;
-* deux pages ;
-* un panneau de chat ouvrable.
+- deux boutons ;
+- deux onglets ;
+- une navigation latérale ;
+- deux pages ;
+- un panneau de chat ouvrable.
 
 Choisir l’option la plus simple compatible avec l’architecture existante.
 
@@ -318,30 +318,30 @@ Choisir l’option la plus simple compatible avec l’architecture existante.
 
 Le mode Jouer doit afficher :
 
-* le sélecteur de jeu ;
-* le titre ;
-* la description ;
-* le Canvas ;
-* les instructions ;
-* le score ;
-* le temps restant si nécessaire ;
-* le bouton lancer ;
-* le bouton recommencer ;
-* le bouton ou lien permettant d’ouvrir le chat.
+- le sélecteur de jeu ;
+- le titre ;
+- la description ;
+- le Canvas ;
+- les instructions ;
+- le score ;
+- le temps restant si nécessaire ;
+- le bouton lancer ;
+- le bouton recommencer ;
+- le bouton ou lien permettant d’ouvrir le chat.
 
 ### Mode Créer
 
 Le mode Créer doit afficher :
 
-* l’historique du chat ;
-* une zone de saisie ;
-* un bouton envoyer ;
-* un indicateur de chargement ;
-* les étapes de génération ;
-* les erreurs éventuelles ;
-* un résumé du jeu généré ;
-* un bouton « Tester le jeu » ;
-* un bouton « Retour aux jeux ».
+- l’historique du chat ;
+- une zone de saisie ;
+- un bouton envoyer ;
+- un indicateur de chargement ;
+- les étapes de génération ;
+- les erreurs éventuelles ;
+- un résumé du jeu généré ;
+- un bouton « Tester le jeu » ;
+- un bouton « Retour aux jeux ».
 
 L’interface doit rester lisible, responsive et légère.
 
@@ -385,12 +385,12 @@ Lorsque l’utilisateur envoie un message :
 
 En cas d’erreur :
 
-* afficher un message compréhensible ;
-* ne pas ajouter de jeu invalide au catalogue ;
-* permettre à l’utilisateur de réessayer ;
-* journaliser l’erreur côté serveur ;
-* ne jamais afficher la clé API ;
-* ne jamais afficher une stack trace complète à l’utilisateur.
+- afficher un message compréhensible ;
+- ne pas ajouter de jeu invalide au catalogue ;
+- permettre à l’utilisateur de réessayer ;
+- journaliser l’erreur côté serveur ;
+- ne jamais afficher la clé API ;
+- ne jamais afficher une stack trace complète à l’utilisateur.
 
 ---
 
@@ -408,39 +408,39 @@ Son rôle est de transformer une demande utilisateur en une configuration de jeu
 
 L’agent doit :
 
-* comprendre le thème demandé ;
-* identifier le template le plus adapté ;
-* produire une configuration structurée ;
-* respecter les limites numériques ;
-* ne produire aucun code ;
-* ne créer aucun fichier arbitraire ;
-* ne modifier aucun moteur ;
-* ne choisir qu’un template autorisé ;
-* retourner une réponse validable par Zod.
+- comprendre le thème demandé ;
+- identifier le template le plus adapté ;
+- produire une configuration structurée ;
+- respecter les limites numériques ;
+- ne produire aucun code ;
+- ne créer aucun fichier arbitraire ;
+- ne modifier aucun moteur ;
+- ne choisir qu’un template autorisé ;
+- retourner une réponse validable par Zod.
 
 ### Instructions de l’agent
 
 L’agent doit privilégier :
 
-* la simplicité ;
-* la jouabilité ;
-* des règles compréhensibles ;
-* des durées courtes ;
-* des vitesses raisonnables ;
-* des couleurs CSS valides ;
-* des textes courts ;
-* un niveau de difficulté adapté.
+- la simplicité ;
+- la jouabilité ;
+- des règles compréhensibles ;
+- des durées courtes ;
+- des vitesses raisonnables ;
+- des couleurs CSS valides ;
+- des textes courts ;
+- un niveau de difficulté adapté.
 
 L’agent ne doit jamais :
 
-* générer du TypeScript ;
-* générer du JavaScript ;
-* générer du HTML ;
-* exécuter une commande ;
-* choisir un chemin de fichier ;
-* modifier le catalogue directement ;
-* ajouter une dépendance ;
-* créer un nouveau template.
+- générer du TypeScript ;
+- générer du JavaScript ;
+- générer du HTML ;
+- exécuter une commande ;
+- choisir un chemin de fichier ;
+- modifier le catalogue directement ;
+- ajouter une dépendance ;
+- créer un nouveau template.
 
 ---
 
@@ -464,20 +464,20 @@ Le workflow doit contenir les étapes suivantes :
 
 Chaque étape doit avoir :
 
-* un identifiant explicite ;
-* une entrée typée ;
-* une sortie typée ;
-* une responsabilité unique ;
-* une gestion explicite des erreurs.
+- un identifiant explicite ;
+- une entrée typée ;
+- une sortie typée ;
+- une responsabilité unique ;
+- une gestion explicite des erreurs.
 
 Le workflow ne doit pas contenir :
 
-* de boucle infinie ;
-* de génération libre de code ;
-* de parallélisme inutile ;
-* de multi-agent non justifié ;
-* d’accès direct à un shell ;
-* d’écriture dans un chemin arbitraire.
+- de boucle infinie ;
+- de génération libre de code ;
+- de parallélisme inutile ;
+- de multi-agent non justifié ;
+- d’accès direct à un shell ;
+- d’écriture dans un chemin arbitraire.
 
 Prévoir au maximum une tentative de correction structurée si la première sortie du modèle échoue à la validation.
 
@@ -623,8 +623,6 @@ type GeneratedGameResult = {
 };
 ```
 
-Toutes les données provenant du modèle doivent être validées avec Zod.
-
 Utiliser une union discriminée sur la propriété `template`.
 
 Refuser les propriétés inconnues lorsque cela est possible.
@@ -665,9 +663,9 @@ Les couleurs doivent être des valeurs CSS autorisées.
 
 Préférer :
 
-* les couleurs hexadécimales ;
-* les couleurs RGB ;
-* une liste contrôlée de couleurs nommées.
+- les couleurs hexadécimales ;
+- les couleurs RGB ;
+- une liste contrôlée de couleurs nommées.
 
 Une configuration invalide ne doit jamais être chargée dans le moteur de jeu.
 
@@ -677,8 +675,8 @@ Une configuration invalide ne doit jamais être chargée dans le moteur de jeu.
 
 Le catalogue doit contenir :
 
-* les jeux intégrés ;
-* les jeux générés pendant l’utilisation.
+- les jeux intégrés ;
+- les jeux générés pendant l’utilisation.
 
 Les deux jeux intégrés doivent être définis séparément des jeux générés.
 
@@ -723,10 +721,10 @@ Pour cette version, utiliser une persistance simple.
 
 Solutions autorisées :
 
-* fichier JSON côté serveur ;
-* stockage mémoire pendant la session ;
-* stockage local du navigateur pour la prévisualisation ;
-* combinaison simple de ces solutions.
+- fichier JSON côté serveur ;
+- stockage mémoire pendant la session ;
+- stockage local du navigateur pour la prévisualisation ;
+- combinaison simple de ces solutions.
 
 Ne pas ajouter de base de données sans demande explicite.
 
@@ -744,10 +742,10 @@ Toute lecture du fichier doit être validée avec Zod.
 
 Toute écriture doit :
 
-* préserver les jeux existants ;
-* éviter les identifiants dupliqués ;
-* être atomique autant que possible ;
-* gérer les erreurs de fichier.
+- préserver les jeux existants ;
+- éviter les identifiants dupliqués ;
+- être atomique autant que possible ;
+- gérer les erreurs de fichier.
 
 ---
 
@@ -761,21 +759,21 @@ saveGeneratedGameTool
 
 Il doit :
 
-* recevoir une configuration validée ;
-* créer une entrée de catalogue ;
-* générer un identifiant sûr ;
-* enregistrer le jeu dans le stockage autorisé ;
-* retourner le jeu enregistré.
+- recevoir une configuration validée ;
+- créer une entrée de catalogue ;
+- générer un identifiant sûr ;
+- enregistrer le jeu dans le stockage autorisé ;
+- retourner le jeu enregistré.
 
 Il ne doit pas :
 
-* accepter un chemin fourni par le modèle ;
-* exécuter une commande shell ;
-* supprimer des fichiers ;
-* écrire hors du dossier autorisé ;
-* écrire du code ;
-* modifier les jeux intégrés ;
-* écraser silencieusement un jeu existant.
+- accepter un chemin fourni par le modèle ;
+- exécuter une commande shell ;
+- supprimer des fichiers ;
+- écrire hors du dossier autorisé ;
+- écrire du code ;
+- modifier les jeux intégrés ;
+- écraser silencieusement un jeu existant.
 
 ---
 
@@ -787,26 +785,26 @@ Le LLM fournit uniquement une configuration.
 
 Chaque moteur doit gérer :
 
-* l’initialisation ;
-* la boucle de jeu ;
-* les entrées clavier ;
-* le déplacement du joueur ;
-* les collisions ;
-* le score ;
-* le temps ;
-* la victoire ;
-* la défaite ;
-* le redémarrage ;
-* le nettoyage des événements ;
-* l’arrêt propre de `requestAnimationFrame`.
+- l’initialisation ;
+- la boucle de jeu ;
+- les entrées clavier ;
+- le déplacement du joueur ;
+- les collisions ;
+- le score ;
+- le temps ;
+- la victoire ;
+- la défaite ;
+- le redémarrage ;
+- le nettoyage des événements ;
+- l’arrêt propre de `requestAnimationFrame`.
 
 Lorsqu’un utilisateur change de jeu :
 
-* arrêter la boucle active ;
-* retirer les listeners clavier ;
-* réinitialiser l’état ;
-* vider les références ;
-* initialiser le nouveau jeu.
+- arrêter la boucle active ;
+- retirer les listeners clavier ;
+- réinitialiser l’état ;
+- vider les références ;
+- initialiser le nouveau jeu.
 
 Ne jamais laisser plusieurs boucles de jeu fonctionner simultanément.
 
@@ -819,13 +817,7 @@ Utiliser des états explicites.
 ### État du jeu
 
 ```ts
-type GameStatus =
-  | "idle"
-  | "loading"
-  | "playing"
-  | "won"
-  | "lost"
-  | "error";
+type GameStatus = "idle" | "loading" | "playing" | "won" | "lost" | "error";
 ```
 
 ### État de génération
@@ -895,27 +887,27 @@ Utiliser TypeScript strict.
 
 Éviter :
 
-* `any` ;
-* `as unknown as` ;
-* les assertions non justifiées ;
-* les fonctions trop longues ;
-* les dépendances inutiles ;
-* les classes sans nécessité ;
-* les états globaux mutables ;
-* les abstractions prématurées ;
-* les composants responsables à la fois de l’IA, du catalogue et du moteur.
+- `any` ;
+- `as unknown as` ;
+- les assertions non justifiées ;
+- les fonctions trop longues ;
+- les dépendances inutiles ;
+- les classes sans nécessité ;
+- les états globaux mutables ;
+- les abstractions prématurées ;
+- les composants responsables à la fois de l’IA, du catalogue et du moteur.
 
 Préférer :
 
-* les unions discriminées ;
-* les fonctions pures ;
-* les modules spécialisés ;
-* les schémas Zod ;
-* les noms explicites ;
-* les retours typés ;
-* l’injection de dépendances simple ;
-* les erreurs métier structurées ;
-* les tests proches du comportement réel.
+- les unions discriminées ;
+- les fonctions pures ;
+- les modules spécialisés ;
+- les schémas Zod ;
+- les noms explicites ;
+- les retours typés ;
+- l’injection de dépendances simple ;
+- les erreurs métier structurées ;
+- les tests proches du comportement réel.
 
 Ne pas désactiver TypeScript pour faire compiler le projet.
 
@@ -925,34 +917,34 @@ Ne pas désactiver TypeScript pour faire compiler le projet.
 
 Considérer comme non fiables :
 
-* les prompts utilisateur ;
-* les sorties du modèle ;
-* les fichiers JSON ;
-* les paramètres d’URL ;
-* les données du stockage local.
+- les prompts utilisateur ;
+- les sorties du modèle ;
+- les fichiers JSON ;
+- les paramètres d’URL ;
+- les données du stockage local.
 
 Toujours :
 
-* valider avec Zod ;
-* limiter les longueurs ;
-* borner les nombres ;
-* échapper les textes affichés ;
-* garder les clés côté serveur ;
-* utiliser les variables d’environnement ;
-* utiliser une liste fermée de templates ;
-* utiliser un chemin de stockage fixe.
+- valider avec Zod ;
+- limiter les longueurs ;
+- borner les nombres ;
+- échapper les textes affichés ;
+- garder les clés côté serveur ;
+- utiliser les variables d’environnement ;
+- utiliser une liste fermée de templates ;
+- utiliser un chemin de stockage fixe.
 
 Ne jamais :
 
-* exécuter du code généré ;
-* injecter une sortie du modèle avec `innerHTML` ;
-* utiliser `eval` ;
-* utiliser `new Function` ;
-* exécuter une commande shell issue du modèle ;
-* accepter un chemin de fichier issu du modèle ;
-* exposer une clé API ;
-* créer dynamiquement une dépendance ;
-* générer un script arbitraire.
+- exécuter du code généré ;
+- injecter une sortie du modèle avec `innerHTML` ;
+- utiliser `eval` ;
+- utiliser `new Function` ;
+- exécuter une commande shell issue du modèle ;
+- accepter un chemin de fichier issu du modèle ;
+- exposer une clé API ;
+- créer dynamiquement une dépendance ;
+- générer un script arbitraire.
 
 ---
 
@@ -975,10 +967,10 @@ Ne pas afficher les instructions internes de l’agent.
 
 Le bouton « Tester le jeu » ne doit être actif que lorsque :
 
-* la configuration est valide ;
-* le jeu est enregistré ;
-* le template correspondant existe ;
-* le moteur peut être initialisé.
+- la configuration est valide ;
+- le jeu est enregistré ;
+- le template correspondant existe ;
+- le moteur peut être initialisé.
 
 ---
 
@@ -988,50 +980,50 @@ Créer des tests pour :
 
 ### Catalogue
 
-* chargement des deux jeux intégrés ;
-* sélection d’un jeu ;
-* ajout d’un jeu généré ;
-* refus d’un identifiant dupliqué ;
-* absence de mutation directe du catalogue.
+- chargement des deux jeux intégrés ;
+- sélection d’un jeu ;
+- ajout d’un jeu généré ;
+- refus d’un identifiant dupliqué ;
+- absence de mutation directe du catalogue.
 
 ### Schémas
 
-* configuration `dodge` valide ;
-* configuration `collect` valide ;
-* template inconnu ;
-* durée trop courte ;
-* vitesse trop élevée ;
-* couleur invalide ;
-* propriété inconnue ;
-* prompt trop long.
+- configuration `dodge` valide ;
+- configuration `collect` valide ;
+- template inconnu ;
+- durée trop courte ;
+- vitesse trop élevée ;
+- couleur invalide ;
+- propriété inconnue ;
+- prompt trop long.
 
 ### Jeu d’évitement
 
-* déplacement du joueur ;
-* apparition d’un obstacle ;
-* collision ;
-* victoire ;
-* défaite ;
-* redémarrage.
+- déplacement du joueur ;
+- apparition d’un obstacle ;
+- collision ;
+- victoire ;
+- défaite ;
+- redémarrage.
 
 ### Jeu de collecte
 
-* déplacement du joueur ;
-* apparition d’un objet ;
-* collecte ;
-* incrémentation du score ;
-* victoire ;
-* expiration du temps ;
-* redémarrage.
+- déplacement du joueur ;
+- apparition d’un objet ;
+- collecte ;
+- incrémentation du score ;
+- victoire ;
+- expiration du temps ;
+- redémarrage.
 
 ### Génération
 
-* sélection du template `dodge` ;
-* sélection du template `collect` ;
-* rejet d’une réponse invalide ;
-* création d’une entrée de catalogue ;
-* sauvegarde d’un jeu valide ;
-* gestion d’une erreur du modèle.
+- sélection du template `dodge` ;
+- sélection du template `collect` ;
+- rejet d’une réponse invalide ;
+- création d’une entrée de catalogue ;
+- sauvegarde d’un jeu valide ;
+- gestion d’une erreur du modèle.
 
 ---
 
@@ -1146,22 +1138,22 @@ Ne pas masquer silencieusement les erreurs.
 
 Journaliser au minimum :
 
-* début de génération ;
-* fin de génération ;
-* modèle utilisé ;
-* template sélectionné ;
-* durée du workflow ;
-* erreur de validation ;
-* erreur de sauvegarde ;
-* identifiant du jeu généré.
+- début de génération ;
+- fin de génération ;
+- modèle utilisé ;
+- template sélectionné ;
+- durée du workflow ;
+- erreur de validation ;
+- erreur de sauvegarde ;
+- identifiant du jeu généré.
 
 Ne pas journaliser :
 
-* les clés API ;
-* les secrets ;
-* des données sensibles ;
-* les instructions internes complètes ;
-* des prompts sans limite de longueur.
+- les clés API ;
+- les secrets ;
+- des données sensibles ;
+- les instructions internes complètes ;
+- des prompts sans limite de longueur.
 
 Aucune plateforme externe d’observabilité ne doit être ajoutée sans demande explicite.
 
@@ -1209,55 +1201,55 @@ Claude Code doit procéder dans cet ordre.
 
 ### Étape 1 — Catalogue et sélection
 
-* créer les types communs ;
-* créer le catalogue ;
-* conserver le premier jeu ;
-* ajouter le second jeu ;
-* ajouter la liste déroulante ;
-* permettre de changer de jeu ;
-* gérer le nettoyage du moteur actif ;
-* tester les deux jeux.
+- créer les types communs ;
+- créer le catalogue ;
+- conserver le premier jeu ;
+- ajouter le second jeu ;
+- ajouter la liste déroulante ;
+- permettre de changer de jeu ;
+- gérer le nettoyage du moteur actif ;
+- tester les deux jeux.
 
 ### Étape 2 — Interface de chat sans IA réelle
 
-* créer la page ou le panneau de chat ;
-* créer les composants de messages ;
-* créer les états de génération ;
-* mocker une réponse de génération ;
-* ajouter un faux jeu généré au catalogue ;
-* permettre de le tester.
+- créer la page ou le panneau de chat ;
+- créer les composants de messages ;
+- créer les états de génération ;
+- mocker une réponse de génération ;
+- ajouter un faux jeu généré au catalogue ;
+- permettre de le tester.
 
 ### Étape 3 — Schémas de génération
 
-* créer les schémas Zod ;
-* créer l’union discriminée ;
-* ajouter les limites ;
-* tester toutes les erreurs de validation.
+- créer les schémas Zod ;
+- créer l’union discriminée ;
+- ajouter les limites ;
+- tester toutes les erreurs de validation.
 
 ### Étape 4 — Mastra
 
-* créer ou faire évoluer `gameDesignerAgent` ;
-* créer le workflow ;
-* ajouter la sélection de template ;
-* ajouter la génération structurée ;
-* ajouter la sauvegarde ;
-* retourner un résultat validé.
+- créer ou faire évoluer `gameDesignerAgent` ;
+- créer le workflow ;
+- ajouter la sélection de template ;
+- ajouter la génération structurée ;
+- ajouter la sauvegarde ;
+- retourner un résultat validé.
 
 ### Étape 5 — Connexion frontend/backend
 
-* connecter le chat à l’endpoint ;
-* afficher la progression ;
-* ajouter le jeu généré ;
-* permettre de le tester ;
-* gérer les erreurs.
+- connecter le chat à l’endpoint ;
+- afficher la progression ;
+- ajouter le jeu généré ;
+- permettre de le tester ;
+- gérer les erreurs.
 
 ### Étape 6 — Tests end-to-end
 
-* tester le sélecteur ;
-* tester les deux jeux ;
-* tester le chat avec modèle mocké ;
-* tester l’ajout au catalogue ;
-* tester le lancement du jeu généré.
+- tester le sélecteur ;
+- tester les deux jeux ;
+- tester le chat avec modèle mocké ;
+- tester l’ajout au catalogue ;
+- tester le lancement du jeu généré.
 
 Ne pas commencer par l’agent avant d’avoir validé le catalogue, le second jeu et le chat mocké.
 
@@ -1267,32 +1259,32 @@ Ne pas commencer par l’agent avant d’avoir validé le catalogue, le second j
 
 Ne pas développer pour le moment :
 
-* plus de deux templates de jeu ;
-* génération de nouveaux moteurs ;
-* génération libre de code ;
-* génération d’assets ;
-* génération de musique ;
-* génération de voix ;
-* 3D ;
-* Godot ;
-* Unity ;
-* Unreal Engine ;
-* sauvegarde cloud ;
-* base de données ;
-* authentification ;
-* paiements ;
-* partage public ;
-* notation des jeux ;
-* marketplace ;
-* multijoueur ;
-* système de plugins ;
-* MCP ;
-* RAG ;
-* mémoire long terme ;
-* plusieurs agents autonomes ;
-* Kubernetes ;
-* Temporal ;
-* Docker distribué.
+- plus de deux templates de jeu ;
+- génération de nouveaux moteurs ;
+- génération libre de code ;
+- génération d’assets ;
+- génération de musique ;
+- génération de voix ;
+- 3D ;
+- Godot ;
+- Unity ;
+- Unreal Engine ;
+- sauvegarde cloud ;
+- base de données ;
+- authentification ;
+- paiements ;
+- partage public ;
+- notation des jeux ;
+- marketplace ;
+- multijoueur ;
+- système de plugins ;
+- MCP ;
+- RAG ;
+- mémoire long terme ;
+- plusieurs agents autonomes ;
+- Kubernetes ;
+- Temporal ;
+- Docker distribué.
 
 ---
 
@@ -1336,3 +1328,18 @@ Toujours privilégier dans cet ordre :
 8. extensibilité.
 
 Ne pas complexifier l’architecture pour anticiper des besoins futurs non confirmés.
+
+---
+
+## 35. Règles de fiabilité du MVP
+
+1. Le MVP supporte uniquement les templates `dodge` et `collect`.
+2. Le LLM génère uniquement une configuration structurée, jamais du code exécutable.
+3. Toute sortie du LLM doit être validée par Zod côté serveur.
+4. Toute configuration doit passer un contrôle déterministe de jouabilité.
+5. Chaque moteur doit implémenter correctement `start`, `stop` et `destroy`.
+6. `destroy` doit supprimer les listeners, les timers et les animation frames.
+7. Une nouvelle mécanique ne doit pas être ajoutée sans test unitaire.
+8. Une nouvelle catégorie de jeu ne doit pas être ajoutée sans définition de template, schéma Zod, contrôle de jouabilité et tests.
+9. Aucun `any`, aucun secret côté client, aucun accès direct au modèle depuis le frontend.
+10. Claude doit privilégier les modifications minimales et ne pas refactorer du code sans rapport avec la tâche.

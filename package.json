@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "mastra dev",
-    "build": "tsc",
+    "build": "tsc && node scripts/vendor-zod.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

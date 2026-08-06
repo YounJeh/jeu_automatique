@@ -1,13 +1,14 @@
 import type { GameStatus } from "./core/game-state.js";
 import { InputController } from "./core/input.js";
 import type { GameCatalogItem } from "./types/game-catalog-item.js";
-import { DodgeEngine } from "./templates/dodge/dodge-engine.js";
+import type { DodgeEngine } from "./templates/dodge/dodge-engine.js";
 import {
   DodgeRenderer,
   type DodgeSprites,
 } from "./templates/dodge/dodge-renderer.js";
-import { CollectEngine } from "./templates/collect/collect-engine.js";
+import type { CollectEngine } from "./templates/collect/collect-engine.js";
 import { CollectRenderer } from "./templates/collect/collect-renderer.js";
+import { getGameTemplateDefinition } from "./templates/game-template-catalog.js";
 
 type ActiveGame =
   | { template: "dodge"; engine: DodgeEngine; renderer: DodgeRenderer }
@@ -45,13 +46,17 @@ export class GameController {
           item.source === "generated"
             ? { player: "🐩", obstacle: "🐺" }
             : undefined;
-        const engine = new DodgeEngine(item.config);
+        const engine = getGameTemplateDefinition(
+          item.config.template,
+        ).createEngine(item.config);
         const renderer = new DodgeRenderer(this.canvas, item.config, sprites);
         this.active = { template: "dodge", engine, renderer };
         break;
       }
       case "collect": {
-        const engine = new CollectEngine(item.config);
+        const engine = getGameTemplateDefinition(
+          item.config.template,
+        ).createEngine(item.config);
         const renderer = new CollectRenderer(this.canvas, item.config);
         this.active = { template: "collect", engine, renderer };
         break;

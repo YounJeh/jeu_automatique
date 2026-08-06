@@ -1,6 +1,6 @@
 import type { GameConfig } from "../../mastra/schemas/generated-game-schema.js";
-import { defaultDodgeConfig } from "../../game/templates/dodge/dodge-config.js";
-import { defaultCollectConfig } from "../../game/templates/collect/collect-config.js";
+import { getGameTemplateDefinition } from "../../game/templates/game-template-catalog.js";
+import type { GameTemplateDefinition } from "../../game/templates/game-template-definition.js";
 import type { GameTemplate } from "../../game/types/game-template.js";
 import { GameGenerationError } from "../../mastra/errors/game-generation-error.js";
 import type { GenerationStatus } from "../types/generation-status.js";
@@ -73,7 +73,7 @@ export function buildGameConfigFromPrompt(
 
   if (template === "dodge") {
     return {
-      ...defaultDodgeConfig,
+      ...getGameTemplateDefinition(template).defaultConfig,
       id,
       title,
       description,
@@ -82,12 +82,51 @@ export function buildGameConfigFromPrompt(
   }
 
   return {
-    ...defaultCollectConfig,
+    ...getGameTemplateDefinition(template).defaultConfig,
     id,
     title,
     description,
     theme,
   };
+}
+
+function validateWithDefinition<TConfig extends GameConfig>(
+  definition: GameTemplateDefinition<TConfig, unknown>,
+  game: TConfig,
+): TConfig {
+  const result = definition.configSchema.safeParse(game);
+
+  if (!result.success) {
+    throw new GameGenerationError(
+      "VALIDATION_FAILED",
+      "La configuration générée n'est pas valide. Réessaie avec une autre description.",
+    );
+  }
+
+  const report = definition.checkPlayability(result.data);
+
+  if (!report.playable) {
+    const firstError = report.issues.find(
+      (issue) => issue.severity === "error",
+    );
+    throw new GameGenerationError(
+      "VALIDATION_FAILED",
+      firstError?.message ?? "La configuration générée n'est pas jouable.",
+    );
+  }
+
+  return result.data;
+}
+
+function validateGeneratedConfig(game: GameConfig): GameConfig {
+  if (game.template === "dodge") {
+    return validateWithDefinition(
+      getGameTemplateDefinition(game.template),
+      game,
+    );
+  }
+
+  return validateWithDefinition(getGameTemplateDefinition(game.template), game);
 }
 
 function buildSummary(game: GameConfig, template: GameTemplate): string {
@@ -105,9 +144,8 @@ function wait(ms: number): Promise<void> {
  * Il ne s'agit pas encore d'un appel à un modèle réel : cette fonction
  * simule côté navigateur les étapes du futur workflow Mastra
  * `generateGameWorkflow` avec une réponse mockée. La configuration produite
- * est construite à partir des valeurs par défaut déjà validées par
- * `gameConfigSchema` (voir chat-service.test.ts) ; la validation Zod réelle
- * sera exécutée côté serveur lors du branchement de l'agent Mastra.
+ * passe par le schéma Zod et la vérification de jouabilité du template
+ * (via le catalogue de templates), comme le fera l'agent Mastra réel.
  */
 export async function generateGameFromPrompt(
   prompt: string,
@@ -143,12 +181,14 @@ export async function generateGameFromPrompt(
   onProgress?.("validating");
   await wait(stepDelayMs);
 
+  const validatedGame = validateGeneratedConfig(game);
+
   onProgress?.("saving");
   await wait(stepDelayMs);
 
   const result: GeneratedGameResult = {
-    game,
-    summary: buildSummary(game, template),
+    game: validatedGame,
+    summary: buildSummary(validatedGame, template),
     generationId: `generation-${crypto.randomUUID()}`,
     createdAt: new Date().toISOString(),
   };
