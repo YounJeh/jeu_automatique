@@ -1,0 +1,74 @@
+[
+  {
+    "id": "generated-d1a57105-460d-40d4-8e1e-4b166c37ebbe",
+    "title": "Chasse aux Pièces",
+    "description": "Rassemble toutes les pièces d'or avant que le temps ne soit écoulé !",
+    "template": "collect",
+    "source": "generated",
+    "config": {
+      "id": "generated-d1a57105-460d-40d4-8e1e-4b166c37ebbe",
+      "title": "Chasse aux Pièces",
+      "description": "Rassemble toutes les pièces d'or avant que le temps ne soit écoulé !",
+      "theme": "Trésor",
+      "playerColor": "#3182ce",
+      "backgroundColor": "#2d3748",
+      "playerSpeed": 250,
+      "gameDurationSeconds": 30,
+      "victoryMessage": "Bravo ! Tous les trésors sont à toi !",
+      "defeatMessage": "Dommage, le temps est écoulé...",
+      "template": "collect",
+      "collectibleColor": "#ecc94b",
+      "targetCollectibleCount": 12,
+      "collectibleSpawnIntervalMs": 800
+    },
+    "createdAt": "2026-08-06T14:10:11.105Z"
+  },
+  {
+    "id": "generated-51df3d6a-5924-4e9a-8d9c-652f3a6c5a3c",
+    "title": "Esquive les Gouttes",
+    "description": "Évite les gouttes de pluie pour rester au sec le plus longtemps possible !",
+    "template": "dodge",
+    "source": "generated",
+    "config": {
+      "id": "generated-51df3d6a-5924-4e9a-8d9c-652f3a6c5a3c",
+      "title": "Esquive les Gouttes",
+      "description": "Évite les gouttes de pluie pour rester au sec le plus longtemps possible !",
+      "theme": "rain",
+      "playerColor": "#ecc94b",
+      "backgroundColor": "#1a365d",
+      "playerSpeed": 250,
+      "gameDurationSeconds": 30,
+      "victoryMessage": "Bravo, tu es resté au sec !",
+      "defeatMessage": "Plouf ! Tu es trempé...",
+      "template": "dodge",
+      "obstacleColor": "#63b3ed",
+      "obstacleSpeed": 180,
+      "obstacleSpawnIntervalMs": 650
+    },
+    "createdAt": "2026-08-06T14:10:57.556Z"
+  },
+  {
+    "id": "generated-b100e604-8e5c-4122-8693-ee57b89eb9d8",
+    "title": "Robot Laser Dodge",
+    "description": "Aide le robot à esquiver tous les lasers verts dans le couloir.",
+    "template": "dodge",
+    "source": "generated",
+    "config": {
+      "id": "generated-b100e604-8e5c-4122-8693-ee57b89eb9d8",
+      "title": "Robot Laser Dodge",
+      "description": "Aide le robot à esquiver tous les lasers verts dans le couloir.",
+      "theme": "sci-fi",
+      "playerColor": "#38bdf8",
+      "backgroundColor": "#0f172a",
+      "playerSpeed": 230,
+      "gameDurationSeconds": 30,
+      "victoryMessage": "Couloir franchi !",
+      "defeatMessage": "Robot désintégré !",
+      "template": "dodge",
+      "obstacleColor": "#22c55e",
+      "obstacleSpeed": 180,
+      "obstacleSpawnIntervalMs": 650
+    },
+    "createdAt": "2026-08-06T14:13:45.649Z"
+  }
+]

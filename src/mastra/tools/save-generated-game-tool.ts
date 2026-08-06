@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { getProjectRoot } from "../project-root.js";
 import {
   generatedGameCatalogItemSchema,
   type GeneratedGameCatalogItem,
@@ -13,7 +14,7 @@ const DEFAULT_GENERATED_GAMES_FILE =
 
 function getGeneratedGamesFilePath(): string {
   return resolve(
-    process.cwd(),
+    getProjectRoot(),
     process.env.GENERATED_GAMES_FILE ?? DEFAULT_GENERATED_GAMES_FILE,
   );
 }

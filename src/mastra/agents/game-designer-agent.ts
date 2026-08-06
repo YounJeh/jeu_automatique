@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 
-const DEFAULT_MODEL = "google/gemini-2.5-flash";
+const DEFAULT_MODEL = "google/gemini-3.6-flash";
 
 const INSTRUCTIONS = `Tu es gameDesignerAgent, l'agent qui transforme une demande utilisateur en configuration de jeu structurée pour l'application "Jeu automatique".
 
