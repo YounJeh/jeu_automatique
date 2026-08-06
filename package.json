@@ -1,15 +1,19 @@
 {
   "type": "module",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
+    "eslint": "^10.8.0",
+    "hono": "4.13.0",
     "mastra": "^1.23.0",
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
+    "typescript-eslint": "^8.66.0",
     "vitest": "^4.1.10"
   },
   "scripts": {
-    "dev": "mastra dev",
+    "dev": "pnpm build && mastra dev",
     "build": "tsc && node scripts/vendor-zod.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -17,7 +21,7 @@
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "check": "pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
     "@mastra/core": "^1.57.0",
