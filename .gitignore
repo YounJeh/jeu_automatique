@@ -4,5 +4,7 @@
 .claude/settings.local.json
 .mastra/
 dist/
+src/mastra/public/
 test-results/
 playwright-report/
+node_modules/
