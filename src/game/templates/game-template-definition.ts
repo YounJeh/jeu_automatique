@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import type { GameTemplate } from "../types/game-template.js";
 import type { SemanticReport } from "../validation/semantic/semantic-validator.js";
-import type { PlayabilityReport } from "./playability.js";
+import type { PlayabilityReport } from "../validation/playability/playability-validator.js";
 
 /**
  * Définition centrale d'un template de jeu : tout ce dont le catalogue,
