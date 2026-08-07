@@ -8,6 +8,8 @@ import {
   type PlayabilityIssue,
   type PlayabilityReport,
 } from "../playability.js";
+import { createSemanticValidator } from "../../validation/semantic/semantic-validator.js";
+import { dodgeSemanticRules } from "../../validation/semantic/dodge-semantic-rules.js";
 import {
   DODGE_CANVAS_HEIGHT,
   DODGE_CANVAS_WIDTH,
@@ -15,6 +17,8 @@ import {
   defaultDodgeConfig,
 } from "./dodge-config.js";
 import { DodgeEngine } from "./dodge-engine.js";
+
+const dodgeSemanticValidator = createSemanticValidator(dodgeSemanticRules);
 
 const SHORT_DURATION_SECONDS = 15;
 const LONG_DURATION_SECONDS = 100;
@@ -116,5 +120,6 @@ export const dodgeTemplateDefinition: GameTemplateDefinition<
   defaultConfig: defaultDodgeConfig,
   configSchema: dodgeGameConfigSchema,
   createEngine: (config, random) => new DodgeEngine(config, random),
+  checkSemantics: dodgeSemanticValidator.validate,
   checkPlayability: checkDodgePlayability,
 };

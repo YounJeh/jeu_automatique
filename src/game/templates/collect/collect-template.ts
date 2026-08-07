@@ -8,12 +8,16 @@ import {
   type PlayabilityIssue,
   type PlayabilityReport,
 } from "../playability.js";
+import { createSemanticValidator } from "../../validation/semantic/semantic-validator.js";
+import { collectSemanticRules } from "../../validation/semantic/collect-semantic-rules.js";
 import {
   COLLECT_CANVAS_HEIGHT,
   COLLECT_CANVAS_WIDTH,
   defaultCollectConfig,
 } from "./collect-config.js";
 import { CollectEngine } from "./collect-engine.js";
+
+const collectSemanticValidator = createSemanticValidator(collectSemanticRules);
 
 const TIGHT_WINDOW_RATIO = 0.9;
 const SLOW_PLAYER_SPAWN_FACTOR = 4;
@@ -150,5 +154,6 @@ export const collectTemplateDefinition: GameTemplateDefinition<
   defaultConfig: defaultCollectConfig,
   configSchema: collectGameConfigSchema,
   createEngine: (config, random) => new CollectEngine(config, random),
+  checkSemantics: collectSemanticValidator.validate,
   checkPlayability: checkCollectPlayability,
 };
