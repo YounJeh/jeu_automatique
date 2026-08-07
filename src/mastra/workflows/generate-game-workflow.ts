@@ -147,7 +147,13 @@ const generateGameConfigStep = createStep({
   },
 });
 
-function validateAndCheckPlayability<TConfig extends GameConfig>(
+/**
+ * Enchaîne les trois couches de validation (CLAUDE.md §8.1) : schema (Zod),
+ * puis semantic (cohérence arithmétique entre champs déclarés), puis
+ * playability (capacité physique du joueur). Chacune peut bloquer la
+ * génération indépendamment des deux autres.
+ */
+export function validateGameConfig<TConfig extends GameConfig>(
   definition: GameTemplateDefinition<TConfig, unknown>,
   candidate: TConfig,
 ): TConfig {
@@ -160,10 +166,22 @@ function validateAndCheckPlayability<TConfig extends GameConfig>(
     );
   }
 
-  const report = definition.checkPlayability(parsed.data);
+  const semanticReport = definition.checkSemantics(parsed.data);
 
-  if (!report.playable) {
-    const firstError = report.issues.find(
+  if (!semanticReport.valid) {
+    const firstError = semanticReport.issues.find(
+      (issue) => issue.severity === "error",
+    );
+    throw new GameGenerationError(
+      "VALIDATION_FAILED",
+      firstError?.message ?? "La configuration générée n'est pas cohérente.",
+    );
+  }
+
+  const playabilityReport = definition.checkPlayability(parsed.data);
+
+  if (!playabilityReport.playable) {
+    const firstError = playabilityReport.issues.find(
       (issue) => issue.severity === "error",
     );
     throw new GameGenerationError(
@@ -185,10 +203,10 @@ const validateGameConfigStep = createStep({
     const candidate = { ...inputData, id: `generated-${randomUUID()}` };
 
     if (candidate.template === "dodge") {
-      return validateAndCheckPlayability(dodgeTemplateDefinition, candidate);
+      return validateGameConfig(dodgeTemplateDefinition, candidate);
     }
 
-    return validateAndCheckPlayability(collectTemplateDefinition, candidate);
+    return validateGameConfig(collectTemplateDefinition, candidate);
   },
 });
 
