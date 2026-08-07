@@ -16,6 +16,7 @@
     "dev": "pnpm build && mastra dev",
     "build": "tsc && node scripts/vendor-zod.mjs",
     "typecheck": "tsc --noEmit",
+    "typecheck:e2e": "tsc -p e2e/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
