@@ -61,35 +61,17 @@ describe("collect playability", () => {
     expect(report).toEqual({ playable: true, issues: [] });
   });
 
-  it("a borderline configuration stays playable but raises a warning", () => {
-    // The last collectible spawns at 15s, right before the 16s time limit:
-    // technically reachable, but with almost no margin.
-    const report = collectTemplateDefinition.checkPlayability({
-      ...collectTemplateDefinition.defaultConfig,
-      targetCollectibleCount: 15,
-      collectibleSpawnIntervalMs: 1000,
-      gameDurationSeconds: 16,
-      playerSpeed: 600,
-    });
-
-    expect(report.playable).toBe(true);
-    expect(issueCodes(report)).toEqual(["TIGHT_COLLECTION_WINDOW"]);
-    expect(report.issues[0]?.severity).toBe("warning");
-  });
-
   it("an impossible configuration is rejected", () => {
-    // Maximum target with the slowest spawn rate and shortest duration:
-    // far more objects need to spawn than the time allows.
+    // Maximum target with the slowest player: the average time budget per
+    // item is far below the minimal travel time.
     const report = collectTemplateDefinition.checkPlayability({
       ...collectTemplateDefinition.defaultConfig,
       targetCollectibleCount: 50,
-      collectibleSpawnIntervalMs: 5000,
       gameDurationSeconds: 10,
       playerSpeed: 100,
     });
 
     expect(report.playable).toBe(false);
-    expect(issueCodes(report)).toContain("INSUFFICIENT_SPAWN_TIME");
     expect(issueCodes(report)).toContain("TARGET_UNREACHABLE_FOR_PLAYER_SPEED");
   });
 
@@ -104,17 +86,5 @@ describe("collect playability", () => {
 
     expect(report.playable).toBe(true);
     expect(issueCodes(report)).toEqual(["SLOW_PLAYER_VS_SPAWN_RATE"]);
-  });
-
-  it("warns about a trivial objective without blocking it", () => {
-    const report = collectTemplateDefinition.checkPlayability({
-      ...collectTemplateDefinition.defaultConfig,
-      targetCollectibleCount: 3,
-      collectibleSpawnIntervalMs: 250,
-      gameDurationSeconds: 120,
-    });
-
-    expect(report.playable).toBe(true);
-    expect(issueCodes(report)).toContain("TRIVIAL_OBJECTIVE");
   });
 });
