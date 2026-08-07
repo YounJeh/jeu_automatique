@@ -1,1357 +1,2612 @@
 # CLAUDE.md
 
-## 1. Présentation du projet
+## 1. Mission du projet
 
-Ce projet est une application Web légère permettant :
+Ce projet construit progressivement une application Web de création de mini-jeux assistée par IA.
 
-- de sélectionner et jouer à plusieurs mini-jeux ;
-- de tester plusieurs templates de jeux existants ;
-- d’ouvrir un chat intégré à l’application ;
-- de demander à un système agentique de créer une nouvelle variante de jeu ;
-- de tester immédiatement le jeu généré dans le navigateur.
+La vision produit à long terme est :
 
-Le système utilise :
+> permettre à un utilisateur de décrire un jeu en langage naturel, de le générer en quelques secondes, de le tester immédiatement, puis de l'ajuster par conversation.
+
+Cette vision doit être atteinte par étapes.
+
+Le projet ne doit jamais sacrifier :
+1. la fiabilité ;
+2. la jouabilité ;
+3. la sécurité ;
+4. la testabilité ;
+5. la simplicité ;
+6. l'expérience utilisateur ;
+7. l'extensibilité.
+
+L'objectif n'est pas de générer immédiatement du code arbitraire.
+
+L'objectif technique est d'évoluer progressivement :
+
+```text
+templates configurables
+→ templates plus variés
+→ systèmes de gameplay réutilisables
+→ mécaniques composables
+→ GameDefinition déclarative
+→ moteur de jeu générique
+→ validation et simulation automatiques
+→ bibliothèque d'assets
+→ nouvelles familles de jeux
+```
+
+La génération libre de code n'est pas nécessaire pour atteindre les prochaines versions du produit.
+
+---
+
+# 2. État de départ
+
+Le projet possède déjà un MVP fonctionnel.
+
+Il contient au minimum :
 
 - TypeScript ;
 - Mastra ;
-- un modèle de langage appelé par API ;
-- HTML5 Canvas pour afficher les jeux ;
-- Zod pour valider les données structurées ;
-- Vitest pour les tests unitaires ;
-- Playwright pour les tests end-to-end ;
-- un frontend Web léger.
+- Zod ;
+- Vitest ;
+- Playwright ;
+- HTML5 Canvas ;
+- un frontend Web léger ;
+- un catalogue de jeux ;
+- une interface Jouer ;
+- une interface Créer ;
+- un chat connecté au backend ;
+- un workflow Mastra ;
+- deux templates de jeux :
+  - `dodge`
+  - `collect`
+- la génération de variantes de ces deux templates par configuration structurée ;
+- la validation des configurations ;
+- la possibilité de lancer immédiatement un jeu généré.
 
-Le projet doit rester léger et fonctionner dans GitHub Codespaces et sur une machine peu puissante.
-
-Ne jamais ajouter sans demande explicite :
-
-- de modèle d’IA local ;
-- de moteur de jeu lourd ;
-- de base vectorielle ;
-- de base de données complexe ;
-- de framework multi-agent supplémentaire ;
-- d’infrastructure cloud distribuée ;
-- de génération libre de code non contrôlée.
-
-Mastra doit rester l’unique framework agentique du projet.
-
----
-
-## 2. Objectif de la version actuelle
-
-L’application doit proposer deux usages principaux.
-
-### Mode Jouer
-
-L’utilisateur peut :
-
-1. ouvrir une liste déroulante ;
-2. sélectionner un jeu disponible ;
-3. consulter son titre et sa description ;
-4. lancer le jeu ;
-5. recommencer une partie ;
-6. sélectionner un autre jeu sans recharger l’application.
-
-### Mode Créer
-
-L’utilisateur peut :
-
-1. ouvrir une page ou un panneau de chat ;
-2. décrire le jeu qu’il souhaite créer ;
-3. envoyer sa demande au système agentique Mastra ;
-4. suivre les différentes étapes de génération ;
-5. recevoir une confirmation lorsque le jeu est prêt ;
-6. lancer immédiatement le jeu généré ;
-7. revenir à la liste des jeux existants.
-
-Le système ne doit pas générer librement une application complète.
-
-Le modèle d’IA doit principalement :
-
-- choisir un template existant ;
-- produire une configuration structurée ;
-- adapter les paramètres autorisés ;
-- valider la cohérence du jeu ;
-- enregistrer la nouvelle configuration dans le catalogue de jeux.
-
----
-
-## 3. Périmètre fonctionnel
-
-La version actuelle doit contenir au minimum :
-
-- une page principale ;
-- une liste déroulante de sélection de jeu ;
-- deux jeux de test préconfigurés ;
-- un bouton permettant de lancer le jeu sélectionné ;
-- un bouton permettant de recommencer ;
-- une option permettant d’ouvrir le chat ;
-- une interface de chat simple ;
-- un système Mastra capable de transformer une demande en configuration de jeu ;
-- un écran ou un état de génération ;
-- un bouton permettant de tester le jeu généré ;
-- un catalogue de jeux chargé dynamiquement.
-
-La version actuelle ne doit pas contenir :
-
-- de génération d’images ;
-- de génération audio ;
-- de génération libre de TypeScript ;
-- de génération de nouveaux moteurs de jeu ;
-- de multijoueur ;
-- de système de compte ;
-- de paiement ;
-- de base vectorielle ;
-- de mémoire long terme ;
-- de marketplace publique ;
-- de déploiement distribué.
-
----
-
-## 4. Jeux disponibles
-
-L’application doit commencer avec deux jeux de test distincts.
-
-## 4.1 Jeu 1 — Jeu d’évitement
-
-### Identifiant
+Le système actuel suit approximativement :
 
 ```text
-dodge-game
+Prompt utilisateur
+→ Mastra
+→ sélection dodge | collect
+→ génération d'une configuration
+→ validation Zod
+→ sauvegarde
+→ ajout au catalogue
+→ jeu jouable
 ```
 
-### Description
+Cette architecture constitue le point de départ.
 
-Le joueur contrôle un carré ou un vaisseau en vue du dessus et doit éviter des obstacles qui descendent depuis le haut de l’écran.
-
-### Règles
-
-- Le joueur se déplace avec les flèches du clavier ou WASD.
-- Les obstacles apparaissent en haut de l’écran.
-- Les obstacles se déplacent vers le bas.
-- Le joueur perd lorsqu’il touche un obstacle.
-- Le score augmente avec le temps.
-- Le joueur gagne lorsqu’il atteint la durée définie.
-- Un bouton permet de recommencer.
-
-### Paramètres personnalisables
-
-- titre ;
-- description ;
-- thème ;
-- couleur du joueur ;
-- couleur du fond ;
-- couleur des obstacles ;
-- vitesse du joueur ;
-- vitesse des obstacles ;
-- fréquence d’apparition des obstacles ;
-- durée de la partie ;
-- texte de victoire ;
-- texte de défaite.
+Ne pas reconstruire ce qui fonctionne déjà sans justification.
 
 ---
 
-## 4.2 Jeu 2 — Jeu de collecte
+# 3. Vision technique cible
 
-### Identifiant
+À long terme, le système doit évoluer vers :
 
 ```text
-collect-game
+Prompt utilisateur
+        ↓
+Game Designer
+        ↓
+GameDefinition
+        ↓
+Schema Validation
+        ↓
+Semantic Validation
+        ↓
+Playability Validation
+        ↓
+Game Runtime
+        ↓
+Simulation / Verification
+        ↓
+Preview
+        ↓
+Playable Game
 ```
 
-### Description
+Le LLM doit principalement produire une représentation structurée du jeu.
 
-Le joueur contrôle un personnage dans une zone fermée et doit collecter un certain nombre d’objets avant la fin du temps imparti.
+Le moteur reste responsable de :
 
-### Règles
+- la boucle de jeu ;
+- la physique simple ;
+- les collisions ;
+- les entrées ;
+- les règles ;
+- les transitions d'état ;
+- le score ;
+- les objectifs ;
+- les timers ;
+- le rendu ;
+- le cycle de vie.
 
-- Le joueur se déplace avec les flèches du clavier ou WASD.
-- Des objets sont répartis ou apparaissent dans la zone de jeu.
-- Un objet disparaît lorsqu’il est collecté.
-- Le score augmente à chaque collecte.
-- Le joueur gagne lorsqu’il atteint l’objectif de collecte.
-- Le joueur perd si le temps est écoulé avant l’objectif.
-- Un bouton permet de recommencer.
-
-### Paramètres personnalisables
-
-- titre ;
-- description ;
-- thème ;
-- couleur du joueur ;
-- couleur du fond ;
-- couleur des objets à collecter ;
-- vitesse du joueur ;
-- nombre d’objets à collecter ;
-- fréquence d’apparition des objets ;
-- durée de la partie ;
-- texte de victoire ;
-- texte de défaite.
+Le LLM ne doit pas être utilisé pour des opérations pouvant être déterministes.
 
 ---
 
-## 5. Sélecteur de jeux
+# 4. Principe fondamental : architecture déclarative
 
-L’interface doit contenir une liste déroulante affichant tous les jeux disponibles.
+La direction technique privilégiée est une architecture data-driven.
 
-Chaque option doit afficher au minimum :
+Un jeu doit progressivement pouvoir être décrit avec des données structurées telles que :
 
-- le titre du jeu ;
-- éventuellement son type ou une courte description.
+```text
+metadata
+player
+entities
+mechanics
+rules
+goals
+world
+difficulty
+presentation
+```
 
-Le catalogue ne doit pas être codé directement dans le composant d’interface.
+Puis exécuté par un moteur déterministe.
 
-Le sélecteur doit être alimenté par une collection de jeux structurée.
+À terme :
+
+```text
+jeu = GameDefinition + runtime générique
+```
+
+et non :
+
+```text
+jeu = nouveau code généré par le LLM
+```
+
+Cette séparation doit rester centrale.
+
+---
+
+# 5. Principe fondamental : progression incrémentale
+
+Ne jamais implémenter une phase future tant que les critères de sortie de la phase actuelle ne sont pas satisfaits.
+
+Chaque phase contient :
+
+- un objectif ;
+- un périmètre ;
+- des tâches ;
+- des tests ;
+- des critères de sortie ;
+- des éléments explicitement interdits.
+
+Claude Code doit toujours :
+
+1. identifier la phase active ;
+2. travailler uniquement dans cette phase ;
+3. effectuer le plus petit changement cohérent ;
+4. vérifier les critères de sortie ;
+5. s'arrêter avant la phase suivante.
+
+Ne jamais effectuer plusieurs phases majeures dans un même changement.
+
+---
+
+# 6. Phases du projet
+
+Ordre obligatoire :
+
+```text
+PHASE 0 — MVP actuel
+PHASE 1 — Fiabilisation du MVP
+PHASE 2 — Troisième template
+PHASE 3 — Systèmes de gameplay réutilisables
+PHASE 4 — Mécaniques composables
+PHASE 5 — GameDefinition v1
+PHASE 6 — Runtime générique
+PHASE 7 — Templates transformés en presets
+PHASE 8 — Vérification, simulation et évaluation
+PHASE 9 — Assets contrôlés
+PHASE 10 — Nouvelles familles de jeux
+PHASE 11 — Génération avancée expérimentale
+```
+
+La phase active doit être documentée explicitement dans le repository.
+
+Créer si nécessaire :
+
+```text
+docs/current-phase.md
+```
+
+Ce fichier doit contenir uniquement :
+
+```text
+Current phase: PHASE X
+Goal: ...
+Exit criteria: ...
+```
+
+Ne pas utiliser ce fichier comme journal de développement.
+
+---
+
+# 7. PHASE 0 — MVP actuel
+
+## Objectif
+
+Disposer d'une première application permettant :
+
+- de jouer à `dodge` ;
+- de jouer à `collect` ;
+- de générer des variantes ;
+- de les ajouter au catalogue ;
+- de les tester immédiatement.
+
+Cette phase est considérée comme déjà implémentée.
+
+## Architecture
+
+```text
+Prompt
+→ template selection
+→ template-specific config
+→ Zod
+→ template engine
+```
+
+## Critère de sortie
+
+Les deux templates fonctionnent et peuvent être générés depuis le chat.
+
+---
+
+# 8. PHASE 1 — Fiabilisation du MVP
+
+## Objectif
+
+Rendre `dodge` et `collect` robustes avant toute extension du moteur.
+
+La priorité est de vérifier que :
+
+> toute configuration acceptée par le système produit un jeu exécutable et raisonnablement jouable.
+
+## 8.1 Séparer trois niveaux de validation
+
+Créer une séparation explicite entre :
+
+### Schema validation
+
+Responsabilité :
+
+```text
+forme des données
+types
+valeurs requises
+bornes simples
+formats
+propriétés inconnues
+```
+
+Outil principal :
+
+```text
+Zod
+```
+
+### Semantic validation
+
+Responsabilité :
+
+```text
+cohérence entre paramètres
+```
+
+Exemples :
+
+```text
+duration > 0
+spawn interval compatible avec la durée
+objectif atteignable
+dimensions compatibles avec le canvas
+```
+
+### Playability validation
+
+Responsabilité :
+
+```text
+détecter une configuration techniquement valide mais injouable
+```
+
+Créer un module similaire à :
+
+```ts
+type PlayabilityIssue = {
+  severity: "warning" | "error";
+  code: string;
+  message: string;
+};
+
+type PlayabilityResult = {
+  playable: boolean;
+  issues: PlayabilityIssue[];
+};
+```
+
+Préférer des règles déterministes.
+
+Ne pas demander au LLM de décider seul si un jeu est jouable.
+
+## 8.2 Tester les cas extrêmes
+
+Ajouter des tests sur :
+
+- vitesse minimale ;
+- vitesse maximale ;
+- fréquence de spawn minimale ;
+- fréquence de spawn maximale ;
+- durée minimale ;
+- durée maximale ;
+- objectif minimal ;
+- objectif maximal ;
+- restart répété ;
+- changement de jeu pendant une partie ;
+- changement de jeu pendant un état `won` ;
+- changement de jeu pendant un état `lost` ;
+- plusieurs générations successives ;
+- erreur API ;
+- erreur Mastra ;
+- configuration invalide ;
+- sauvegarde invalide.
+
+## 8.3 Property-based / generated tests
+
+Ajouter une capacité légère permettant de générer de nombreuses configurations valides.
+
+Il n'est pas obligatoire d'ajouter une dépendance de property-based testing.
+
+Une boucle déterministe de génération de fixtures peut suffire.
+
+Objectif :
+
+```text
+100+ configurations valides
+→ validation
+→ initialisation
+→ aucune exception
+```
+
+Si possible, tester également :
+
+```text
+start
+stop
+restart
+destroy
+```
+
+## 8.4 Lifecycle contract
+
+Chaque moteur doit respecter :
+
+```ts
+interface GameEngine {
+  start(): void;
+  stop(): void;
+  restart(): void;
+  destroy(): void;
+}
+```
+
+`destroy()` doit garantir :
+
+- aucune animation frame active ;
+- aucun timer actif ;
+- aucun listener actif ;
+- aucune référence DOM devenue inutile ;
+- aucun état global conservé.
+
+## Interdit pendant PHASE 1
+
+Ne pas ajouter :
+
+- `shooter` ;
+- ECS ;
+- GameDefinition générique ;
+- assets IA ;
+- multi-agent ;
+- génération de code ;
+- base de données ;
+- nouveau framework.
+
+## Critères de sortie PHASE 1
+
+Tous doivent être vrais :
+
+- `dodge` stable ;
+- `collect` stable ;
+- validation Zod séparée de la validation de jouabilité ;
+- lifecycle fiable ;
+- tests sur configurations extrêmes ;
+- test de nombreuses configurations valides ;
+- `pnpm check` passe ;
+- Playwright essentiel passe.
+
+---
+
+# 9. PHASE 2 — Ajouter un troisième template
+
+## Objectif
+
+Ajouter un template suffisamment différent pour révéler les abstractions réellement communes.
+
+Template recommandé :
+
+```text
+shooter
+```
+
+Le but n'est pas d'augmenter le catalogue.
+
+Le but est d'introduire de nouvelles primitives de gameplay.
+
+## 9.1 Gameplay minimum de shooter
+
+Le joueur peut :
+
+- se déplacer ;
+- tirer ;
+- éviter ou combattre des ennemis.
+
+Le moteur peut gérer :
+
+- projectiles ;
+- ennemis ;
+- points de vie ;
+- dégâts ;
+- score ;
+- objectif de destruction ;
+- timer.
+
+## 9.2 Exemple de paramètres
+
+```ts
+type ShooterGameConfig = BaseGameConfig & {
+  template: "shooter";
+  enemyColor: string;
+  projectileColor: string;
+  enemySpeed: number;
+  enemySpawnIntervalMs: number;
+  projectileSpeed: number;
+  fireCooldownMs: number;
+  playerHealth: number;
+  targetKillCount: number;
+};
+```
+
+Les bornes doivent être strictes.
+
+## 9.3 Workflow IA
+
+Étendre la sélection :
+
+```text
+dodge | collect | shooter
+```
+
+Le LLM reste limité à :
+
+- sélectionner un template ;
+- générer une configuration.
+
+Il ne produit toujours aucun code.
+
+## 9.4 Tests obligatoires
+
+Tester :
+
+- projectile créé ;
+- projectile déplacé ;
+- projectile supprimé hors écran ;
+- projectile / ennemi collision ;
+- destruction ennemi ;
+- dégâts joueur ;
+- perte de vie ;
+- victoire ;
+- défaite ;
+- restart ;
+- destroy ;
+- changement de jeu.
+
+## Interdit pendant PHASE 2
+
+Ne pas :
+
+- créer un moteur générique ;
+- convertir immédiatement les trois jeux en ECS ;
+- créer un DSL ;
+- fusionner tous les moteurs ;
+- supprimer les templates ;
+- générer des sprites par IA.
+
+## Critères de sortie PHASE 2
+
+- trois templates fonctionnent ;
+- les trois peuvent être générés par le chat ;
+- tous ont validation Zod ;
+- tous ont playability checks ;
+- tous ont lifecycle complet ;
+- tests unitaires complets ;
+- tests E2E principaux ;
+- aucune abstraction majeure prématurée.
+
+---
+
+# 10. PHASE 3 — Extraire les systèmes réutilisables
+
+## Objectif
+
+Observer les duplications réelles entre :
+
+```text
+dodge
+collect
+shooter
+```
+
+Puis extraire uniquement les concepts manifestement communs.
+
+Ne pas commencer par dessiner une architecture ECS théorique.
+
+L'abstraction doit être justifiée par du code réellement dupliqué.
+
+## 10.1 Systèmes potentiels
+
+Extraire progressivement selon besoin :
+
+```text
+MovementSystem
+CollisionSystem
+SpawnSystem
+TimerSystem
+ScoreSystem
+HealthSystem
+ProjectileSystem
+BoundarySystem
+```
+
+Il n'est pas obligatoire que tous existent.
+
+Créer uniquement ceux justifiés par plusieurs templates.
+
+## 10.2 Types fondamentaux possibles
+
+```ts
+type Position = {
+  x: number;
+  y: number;
+};
+
+type Velocity = {
+  x: number;
+  y: number;
+};
+
+type Size = {
+  width: number;
+  height: number;
+};
+```
+
+Puis éventuellement :
+
+```ts
+type Entity = {
+  id: string;
+  position: Position;
+};
+```
+
+Ne pas créer une hiérarchie de classes complexe.
+
+Préférer :
+
+- composition ;
+- données simples ;
+- fonctions pures ;
+- modules spécialisés.
+
+## 10.3 Input
+
+Centraliser progressivement les entrées si cela réduit réellement les duplications.
 
 Exemple conceptuel :
 
 ```ts
-type GameCatalogItem = {
+type InputState = {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+  fire: boolean;
+};
+```
+
+## 10.4 Collision
+
+Le système de collision doit être indépendant du thème du jeu.
+
+Exemple :
+
+```ts
+function intersects(a: Rect, b: Rect): boolean;
+```
+
+## Interdit pendant PHASE 3
+
+Ne pas encore :
+
+- remplacer tous les templates par une GameDefinition ;
+- construire un ECS complet sans nécessité ;
+- créer un éditeur visuel ;
+- ajouter des dizaines de systèmes “pour plus tard”.
+
+## Critères de sortie PHASE 3
+
+- duplications importantes réduites ;
+- comportement des trois jeux inchangé ;
+- tests existants toujours verts ;
+- systèmes partagés testés indépendamment ;
+- aucun système spécifique ne dépend de Mastra ;
+- aucune logique IA dans le moteur.
+
+---
+
+# 11. PHASE 4 — Mécaniques composables
+
+## Objectif
+
+Passer progressivement de :
+
+```text
+template = règles implicites
+```
+
+à :
+
+```text
+jeu = combinaison de mécaniques
+```
+
+Les templates existent encore.
+
+## 11.1 Créer un registre de mécaniques
+
+Créer une liste fermée.
+
+Exemple initial :
+
+```ts
+type GameMechanic =
+  | "move"
+  | "avoid"
+  | "collect"
+  | "shoot"
+  | "health"
+  | "score"
+  | "timer";
+```
+
+Ne pas laisser le modèle inventer une mécanique inconnue.
+
+## 11.2 Mechanic registry
+
+Créer un registre déterministe.
+
+Exemple conceptuel :
+
+```ts
+type MechanicDefinition = {
+  id: GameMechanic;
+  dependencies: GameMechanic[];
+  conflicts?: GameMechanic[];
+};
+```
+
+Exemple :
+
+```text
+shoot
+requires:
+- move
+```
+
+ou selon architecture réelle :
+
+```text
+health
+compatible:
+- collision
+```
+
+Ne pas sur-concevoir ce modèle.
+
+## 11.3 Décrire les templates existants
+
+Exemple conceptuel :
+
+```text
+dodge
+= move + avoid + timer
+
+collect
+= move + collect + score + timer
+
+shooter
+= move + shoot + avoid + health + score
+```
+
+Le moteur peut encore utiliser les contrôleurs existants.
+
+## 11.4 Premier jeu hybride
+
+Créer au maximum un jeu hybride interne/test.
+
+Exemple :
+
+```text
+move
++ collect
++ avoid
+```
+
+Il peut être utilisé comme preuve de concept.
+
+Il n'est pas nécessaire de l'exposer immédiatement à tous les utilisateurs.
+
+## Interdit pendant PHASE 4
+
+Ne pas :
+
+- permettre des mécaniques arbitraires ;
+- générer du code ;
+- supprimer les moteurs existants ;
+- exposer une combinaison non testée au LLM.
+
+## Critères de sortie PHASE 4
+
+- registre fermé de mécaniques ;
+- dépendances validées ;
+- incompatibilités détectables ;
+- templates mappés vers leurs mécaniques ;
+- au moins une combinaison hybride prouvée ;
+- tests d'intégration de combinaisons.
+
+---
+
+# 12. PHASE 5 — GameDefinition v1
+
+## Objectif
+
+Introduire une représentation déclarative générique du jeu.
+
+Cette représentation est le contrat entre :
+
+```text
+IA
+et
+moteur
+```
+
+La première version doit être volontairement limitée.
+
+## 12.1 Principe
+
+Créer :
+
+```ts
+type GameDefinition = {
+  version: "1";
+  metadata: GameMetadata;
+  world: WorldDefinition;
+  player: PlayerDefinition;
+  entities: EntityDefinition[];
+  mechanics: MechanicDefinitionRef[];
+  rules: RuleDefinition[];
+  goals: GoalDefinition[];
+  presentation: PresentationDefinition;
+};
+```
+
+Adapter à l'architecture réelle.
+
+Ne pas ajouter de champ sans cas d'usage concret.
+
+## 12.2 Metadata
+
+Exemple :
+
+```ts
+type GameMetadata = {
   id: string;
   title: string;
   description: string;
-  template: GameTemplate;
-  config: GameConfig;
-  source: "built-in" | "generated";
-  createdAt?: string;
+  theme: string;
 };
 ```
 
-Le changement de jeu sélectionné doit :
+## 12.3 World
 
-1. arrêter proprement le jeu actuel ;
-2. réinitialiser son état ;
-3. charger la nouvelle configuration ;
-4. charger le moteur associé ;
-5. afficher le nouveau titre et la nouvelle description ;
-6. ne pas nécessiter de rechargement complet de la page.
-
----
-
-## 6. Templates de jeux
-
-Utiliser une architecture fondée sur des templates contrôlés.
-
-Les templates autorisés sont initialement :
+Exemple :
 
 ```ts
-type GameTemplate = "dodge" | "collect";
+type WorldDefinition = {
+  width: number;
+  height: number;
+  boundaries: "solid" | "clamp";
+  durationSeconds?: number;
+};
 ```
 
-Le modèle d’IA ne doit pas inventer un nouveau type de jeu pendant cette version.
+## 12.4 Player
 
-Il doit obligatoirement sélectionner un template existant.
+Exemple :
 
-Chaque template doit disposer :
+```ts
+type PlayerDefinition = {
+  speed: number;
+  health?: number;
+  appearance: AppearanceDefinition;
+};
+```
 
-- de son propre moteur ou contrôleur ;
-- de son propre schéma de configuration ;
-- de valeurs par défaut ;
-- de règles de validation ;
-- de tests unitaires ;
-- d’une fonction d’initialisation ;
-- d’une fonction de mise à jour ;
-- d’une fonction de rendu ;
-- d’une fonction de destruction ou de nettoyage.
+## 12.5 Entities
+
+Commencer avec une liste fermée.
+
+Exemple :
+
+```ts
+type EntityKind =
+  | "obstacle"
+  | "collectible"
+  | "enemy"
+  | "projectile";
+```
+
+## 12.6 Rules
+
+Créer une DSL de règles minimale.
+
+Éviter toute expression exécutable arbitraire.
+
+Exemple conceptuel :
+
+```ts
+type GameRule = {
+  when: RuleEvent;
+  then: RuleAction[];
+};
+```
+
+Événements fermés possibles :
+
+```text
+player-collides-obstacle
+player-collides-collectible
+player-collides-enemy
+projectile-collides-enemy
+timer-expired
+score-reached
+health-zero
+```
+
+Actions fermées possibles :
+
+```text
+increase-score
+remove-entity
+damage-player
+win-game
+lose-game
+spawn-entity
+```
+
+La liste doit rester courte.
+
+## 12.7 Goals
+
+Exemple :
+
+```ts
+type GoalDefinition =
+  | {
+      type: "survive";
+      durationSeconds: number;
+    }
+  | {
+      type: "score";
+      target: number;
+    }
+  | {
+      type: "destroy";
+      target: number;
+    };
+```
+
+## 12.8 Versioning
+
+Toute GameDefinition doit contenir :
+
+```text
+version
+```
+
+Ne jamais modifier silencieusement la signification d'une version existante.
+
+Si une évolution incompatible devient nécessaire :
+
+```text
+version: "2"
+```
+
+avec migration explicite si nécessaire.
+
+## 12.9 Validation
+
+Créer :
+
+```text
+GameDefinitionSchema
+GameDefinitionSemanticValidator
+GameDefinitionPlayabilityValidator
+```
+
+Trois responsabilités distinctes.
+
+## Interdit pendant PHASE 5
+
+Ne pas :
+
+- convertir immédiatement toute l'application ;
+- supprimer les configs historiques ;
+- accepter JavaScript dans les règles ;
+- accepter fonctions ou expressions arbitraires ;
+- accepter `eval` ;
+- accepter `new Function`.
+
+## Critères de sortie PHASE 5
+
+- GameDefinition v1 documentée ;
+- schéma Zod strict ;
+- règles fermées ;
+- événements fermés ;
+- actions fermées ;
+- validation sémantique ;
+- validation jouabilité ;
+- conversion possible d'au moins un jeu existant vers GameDefinition ;
+- tests de sérialisation/désérialisation.
 
 ---
 
-## 7. Architecture fonctionnelle
+# 13. PHASE 6 — Runtime générique
 
-Le flux du mode Jouer doit être :
+## Objectif
 
-```text
-Chargement de l’application
-→ Chargement du catalogue
-→ Sélection d’un jeu
-→ Chargement du template
-→ Validation de la configuration
-→ Initialisation du moteur
-→ Partie jouable
+Créer un moteur capable d'exécuter progressivement une `GameDefinition`.
+
+Ne pas remplacer tous les moteurs en une fois.
+
+## 13.1 Runtime
+
+Créer une interface claire.
+
+Exemple :
+
+```ts
+interface GameRuntime {
+  load(definition: GameDefinition): void;
+  start(): void;
+  stop(): void;
+  restart(): void;
+  destroy(): void;
+}
 ```
 
-Le flux du mode Créer doit être :
+## 13.2 Runtime state
+
+Séparer :
 
 ```text
-Message utilisateur
-→ Chat intégré
-→ Agent Mastra
-→ Analyse de la demande
-→ Sélection d’un template
-→ Génération d’une configuration structurée
-→ Validation Zod
-→ Enregistrement dans le catalogue
-→ Prévisualisation
-→ Jeu testable
+GameDefinition
 ```
 
-Le système doit commencer avec un seul agent Mastra principal.
+qui est statique de :
 
-Ne pas créer plusieurs agents autonomes tant que le workflow actuel n’est pas fiable.
+```text
+RuntimeState
+```
 
-Des étapes spécialisées peuvent exister dans un workflow, mais elles ne doivent pas être présentées comme des agents indépendants sans nécessité.
+qui évolue pendant la partie.
+
+Exemple :
+
+```ts
+type RuntimeState = {
+  status: GameStatus;
+  score: number;
+  elapsedMs: number;
+  entities: RuntimeEntity[];
+};
+```
+
+Ne jamais modifier directement la `GameDefinition` pendant une partie.
+
+## 13.3 Entity state
+
+Les entités runtime doivent avoir des identifiants stables.
+
+Exemple :
+
+```ts
+type RuntimeEntity = {
+  id: string;
+  kind: EntityKind;
+  position: Position;
+  velocity?: Velocity;
+};
+```
+
+## 13.4 Déterminisme
+
+Lorsque possible, permettre un RNG injectable :
+
+```ts
+type RandomSource = () => number;
+```
+
+Cela permet :
+
+- tests reproductibles ;
+- simulation ;
+- debugging ;
+- vérification automatique.
+
+Éviter l'utilisation dispersée de `Math.random()`.
+
+## 13.5 Migration incrémentale
+
+Migrer dans cet ordre recommandé :
+
+```text
+collect
+→ dodge
+→ shooter
+```
+
+ou l'ordre le plus simple d'après l'architecture réelle.
+
+Après chaque migration :
+
+- comparer comportement ;
+- lancer tests ;
+- conserver fallback ancien moteur jusqu'à validation.
+
+## Interdit pendant PHASE 6
+
+Ne pas migrer tous les moteurs dans un seul commit.
+
+Ne pas supprimer l'ancien moteur avant validation du nouveau.
+
+Ne pas introduire un framework ECS externe sans preuve qu'il est nécessaire.
+
+## Critères de sortie PHASE 6
+
+- runtime générique fonctionnel ;
+- cycle de vie fiable ;
+- RNG injectable ;
+- états séparés ;
+- tous les templates migrés ou compatibilité claire ;
+- anciens tests adaptés ;
+- E2E verts ;
+- aucune dépendance au LLM dans le runtime.
 
 ---
 
-## 8. Interface utilisateur
+# 14. PHASE 7 — Templates deviennent des presets
 
-L’application doit proposer une navigation simple.
+## Objectif
 
-Deux modes principaux doivent être accessibles :
+Faire évoluer la notion de template.
+
+Avant :
+
+```text
+template = moteur spécifique
+```
+
+Après :
+
+```text
+template = GameDefinition préconfigurée
+```
+
+Les templates deviennent des presets de haut niveau.
+
+## 14.1 Presets
+
+Exemple :
+
+```text
+dodge preset
+collect preset
+shooter preset
+```
+
+Chaque preset doit produire une GameDefinition valide.
+
+## 14.2 Génération IA
+
+Le workflow évolue progressivement :
+
+Avant :
+
+```text
+Prompt
+→ classify template
+→ template config
+```
+
+Après :
+
+```text
+Prompt
+→ infer mechanics
+→ choose compatible preset if useful
+→ create GameDefinition
+```
+
+Ne pas supprimer la classification immédiatement.
+
+Conserver un fallback vers les presets éprouvés.
+
+## 14.3 Compatibilité
+
+Si le LLM produit une GameDefinition invalide :
+
+```text
+validation
+→ repair once
+→ fallback preset
+ou
+→ user-facing error
+```
+
+Maximum recommandé :
+
+```text
+1 tentative de réparation structurée
+```
+
+Éviter les boucles agentiques non bornées.
+
+## Critères de sortie PHASE 7
+
+- `dodge`, `collect`, `shooter` sont représentables par GameDefinition ;
+- templates ne nécessitent plus de moteurs différents ;
+- moteur générique est la voie principale ;
+- fallback fiable ;
+- workflow Mastra retourne des structured outputs ;
+- validation stricte avant runtime.
+
+---
+
+# 15. PHASE 8 — Vérification, simulation et évaluation
+
+## Objectif
+
+Ne plus considérer :
+
+```text
+configuration valide
+```
+
+comme synonyme de :
+
+```text
+bon jeu
+```
+
+La qualité doit devenir mesurable.
+
+## 15.1 Static verification
+
+Vérifier sans exécuter le jeu :
+
+- objectif atteignable en théorie ;
+- références vers entités existantes ;
+- événements connus ;
+- actions connues ;
+- pas de dépendance circulaire interdite ;
+- mécaniques compatibles ;
+- aucun état terminal impossible.
+
+## 15.2 Headless simulation
+
+Créer lorsque possible un mode de simulation sans rendu.
+
+Exemple :
+
+```text
+GameDefinition
+→ runtime headless
+→ N simulations
+→ metrics
+```
+
+Métriques possibles :
+
+```ts
+type SimulationMetrics = {
+  completedRuns: number;
+  winRate: number;
+  averageDurationMs: number;
+  averageScore: number;
+  runtimeErrors: number;
+};
+```
+
+Ne pas introduire de métrique sans utilité produit.
+
+## 15.3 Deterministic scenarios
+
+Créer des scénarios vérifiant directement les règles importantes.
+
+Exemples :
+
+```text
+placer joueur + collectible en collision
+→ score augmente
+
+placer projectile + enemy en collision
+→ enemy supprimé
+
+health = 1 + collision enemy
+→ lost
+```
+
+Ces tests ciblés doivent être privilégiés par rapport à un agent qui joue aléatoirement pendant plusieurs minutes.
+
+## 15.4 Evaluation dataset
+
+Créer un dataset versionné de prompts.
+
+Exemple :
+
+```text
+tests/evals/game-generation-cases.json
+```
+
+Cas minimum :
+
+- dodge simple ;
+- collect simple ;
+- shooter simple ;
+- hybride collect + avoid ;
+- demandes ambiguës ;
+- demandes impossibles ;
+- paramètres extrêmes ;
+- prompts adversariaux ;
+- mécaniques non supportées.
+
+Pour chaque cas, stocker les propriétés attendues.
+
+Ne pas exiger une sortie textuelle exacte.
+
+Évaluer des propriétés structurelles.
+
+Exemples :
+
+```text
+has mechanic collect
+has goal score
+valid schema
+playable
+runtime initializes
+```
+
+## 15.5 Mastra evaluations
+
+Si les primitives d'évaluation Mastra déjà installées dans la version du projet permettent de le faire simplement, elles peuvent être utilisées.
+
+Ne pas ajouter un système externe d'évaluation sans nécessité.
+
+## 15.6 Observabilité
+
+Mesurer au minimum :
+
+- succès génération ;
+- échec génération ;
+- échec schema ;
+- échec semantic validation ;
+- échec playability ;
+- fallback utilisé ;
+- durée génération ;
+- coût/tokens si disponible ;
+- runtime initialization success.
+
+## Critères de sortie PHASE 8
+
+- suite d'évaluation versionnée ;
+- simulations reproductibles ;
+- scénarios ciblés ;
+- métriques de génération ;
+- régressions détectables ;
+- taux de réussite mesurable.
+
+---
+
+# 16. PHASE 9 — Assets contrôlés
+
+## Objectif
+
+Améliorer fortement l'apparence des jeux sans rendre le pipeline fragile.
+
+Procéder progressivement.
+
+Ordre obligatoire :
+
+```text
+formes Canvas
+→ assets prédéfinis
+→ asset catalog
+→ sélection IA
+→ génération d'assets éventuelle
+```
+
+## 16.1 AppearanceDefinition
+
+Créer une représentation stable.
+
+Exemple :
+
+```ts
+type AppearanceDefinition =
+  | {
+      type: "shape";
+      shape: "rectangle" | "circle" | "triangle";
+      color: string;
+    }
+  | {
+      type: "sprite";
+      assetId: string;
+    };
+```
+
+## 16.2 Asset catalog
+
+Les assets doivent être référencés par identifiant.
+
+Exemple :
+
+```text
+spaceship-blue
+meteor-small
+crystal-purple
+enemy-alien-green
+```
+
+Le LLM ne fournit pas un chemin filesystem arbitraire.
+
+## 16.3 Asset registry
+
+Créer un registre similaire :
+
+```ts
+type AssetCatalogItem = {
+  id: string;
+  type: "sprite";
+  src: string;
+  width: number;
+  height: number;
+};
+```
+
+Le chemin réel reste contrôlé par l'application.
+
+## 16.4 Génération d'images
+
+Ne considérer la génération d'images que si :
+
+- le runtime générique est stable ;
+- l'asset catalog est stable ;
+- fallback shape existe ;
+- chargement asset est testé ;
+- une erreur asset ne casse jamais le jeu.
+
+Le jeu doit fonctionner même si l'asset généré échoue.
+
+## Interdit pendant PHASE 9
+
+Ne jamais autoriser un LLM à :
+
+- écrire une URL arbitraire dans le runtime ;
+- écrire un chemin arbitraire ;
+- injecter SVG/HTML non nettoyé ;
+- exécuter du code contenu dans un asset.
+
+---
+
+# 17. PHASE 10 — Nouvelles familles de jeux
+
+## Objectif
+
+Étendre les capacités du moteur uniquement après stabilisation de la GameDefinition.
+
+Ajouter les familles une par une.
+
+Ordre indicatif :
+
+```text
+top-down survival
+→ simple arena shooter
+→ simple puzzle
+→ breakout-like
+→ simple platformer
+→ tower defense simplifié
+```
+
+Cet ordre n'est pas obligatoire.
+
+La prochaine famille doit être choisie en fonction :
+
+- des demandes utilisateurs ;
+- de la valeur produit ;
+- du nombre de nouvelles primitives nécessaires ;
+- de la compatibilité avec le moteur existant.
+
+## Règle
+
+Une nouvelle famille ne doit pas être ajoutée comme une énorme exception.
+
+Elle doit d'abord identifier :
+
+```text
+quelles nouvelles primitives manquent ?
+```
+
+Puis ajouter seulement ces primitives.
+
+## Exemple platformer
+
+Avant de supporter un platformer, identifier éventuellement :
+
+```text
+gravity
+jump
+grounded
+platform collider
+one-way platform
+```
+
+Ajouter chaque primitive avec tests.
+
+Ne pas coder directement :
+
+```text
+PlatformerEngine
+```
+
+si le runtime générique peut être étendu proprement.
+
+## Critères de sortie par nouvelle famille
+
+- primitives documentées ;
+- schémas ;
+- runtime ;
+- validation ;
+- playability ;
+- tests ;
+- eval prompt ;
+- exemple jouable.
+
+---
+
+# 18. PHASE 11 — Génération avancée expérimentale
+
+## Objectif
+
+Explorer les mécaniques qui ne peuvent pas être exprimées par la GameDefinition existante.
+
+Cette phase est expérimentale.
+
+Elle ne doit pas être commencée tant que les phases précédentes ne sont pas stables.
+
+## Principe
+
+Avant toute génération de code, demander :
+
+```text
+peut-on exprimer cette mécanique en ajoutant une primitive générique ?
+```
+
+Si oui :
+
+```text
+ajouter la primitive au moteur
+```
+
+plutôt que :
+
+```text
+générer du code spécifique au jeu
+```
+
+## Génération de code
+
+La génération de code exécutable reste hors du chemin principal.
+
+Si elle est expérimentée un jour, elle doit obligatoirement être :
+
+- isolée ;
+- sandboxée ;
+- non privilégiée ;
+- avec timeout ;
+- avec limites CPU/mémoire ;
+- sans secrets ;
+- sans accès filesystem arbitraire ;
+- sans accès réseau arbitraire ;
+- testée avant exécution utilisateur ;
+- derrière feature flag ;
+- jamais injectée avec `eval` ou `new Function`.
+
+Cette phase ne doit jamais affaiblir la sécurité de la version stable.
+
+---
+
+# 19. Architecture cible progressive
+
+L'architecture peut évoluer vers quelque chose de proche de :
+
+```text
+src/
+├── app/
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   └── state/
+│
+├── game/
+│   ├── core/
+│   │   ├── runtime/
+│   │   ├── lifecycle/
+│   │   ├── input/
+│   │   └── random/
+│   │
+│   ├── entities/
+│   ├── systems/
+│   │   ├── movement/
+│   │   ├── collision/
+│   │   ├── spawn/
+│   │   ├── score/
+│   │   ├── health/
+│   │   └── projectile/
+│   │
+│   ├── mechanics/
+│   │   ├── registry.ts
+│   │   └── compatibility.ts
+│   │
+│   ├── definition/
+│   │   ├── game-definition.ts
+│   │   ├── game-definition-schema.ts
+│   │   ├── semantic-validator.ts
+│   │   └── playability-validator.ts
+│   │
+│   ├── presets/
+│   │   ├── dodge.ts
+│   │   ├── collect.ts
+│   │   └── shooter.ts
+│   │
+│   ├── simulation/
+│   └── assets/
+│
+├── mastra/
+│   ├── agents/
+│   ├── workflows/
+│   ├── tools/
+│   ├── schemas/
+│   └── evals/
+│
+└── tests/
+    ├── unit/
+    ├── integration/
+    ├── evals/
+    └── e2e/
+```
+
+Cette arborescence est une direction.
+
+Ne pas créer les dossiers tant que leur responsabilité n'existe pas réellement.
+
+---
+
+# 20. Frontend
+
+Le frontend doit rester simple.
+
+Fonctions principales :
 
 ```text
 Jouer
-Créer un jeu
+Créer
+Tester
+Modifier
 ```
 
-L’interface peut utiliser :
+À terme, le workflow utilisateur recommandé est :
 
-- deux boutons ;
-- deux onglets ;
-- une navigation latérale ;
-- deux pages ;
-- un panneau de chat ouvrable.
+```text
+"Crée-moi un jeu où..."
+→ génération
+→ preview
+→ jouer
+→ "rends-le plus difficile"
+→ nouvelle version
+→ jouer
+```
 
-Choisir l’option la plus simple compatible avec l’architecture existante.
+Ne pas créer immédiatement :
 
-### Mode Jouer
-
-Le mode Jouer doit afficher :
-
-- le sélecteur de jeu ;
-- le titre ;
-- la description ;
-- le Canvas ;
-- les instructions ;
-- le score ;
-- le temps restant si nécessaire ;
-- le bouton lancer ;
-- le bouton recommencer ;
-- le bouton ou lien permettant d’ouvrir le chat.
-
-### Mode Créer
-
-Le mode Créer doit afficher :
-
-- l’historique du chat ;
-- une zone de saisie ;
-- un bouton envoyer ;
-- un indicateur de chargement ;
-- les étapes de génération ;
-- les erreurs éventuelles ;
-- un résumé du jeu généré ;
-- un bouton « Tester le jeu » ;
-- un bouton « Retour aux jeux ».
-
-L’interface doit rester lisible, responsive et légère.
+- éditeur de niveaux complexe ;
+- timeline ;
+- IDE ;
+- marketplace ;
+- système social.
 
 ---
 
-## 9. Chat intégré
+# 21. Conversation et itération
 
-Le chat doit être directement intégré à l’application.
+À terme, une conversation doit pouvoir modifier un jeu existant.
 
-Il ne doit pas exposer la clé API dans le navigateur.
+Exemple :
 
-Les messages doivent être envoyés à une route serveur ou à un endpoint Mastra.
+```text
+User:
+Crée un jeu où je collecte des cristaux en évitant des météorites.
 
-### Structure conceptuelle d’un message
+Assistant:
+GameDefinition v1
 
-```ts
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant" | "system";
-  content: string;
-  createdAt: string;
-  status?: "sending" | "sent" | "error";
-};
+User:
+Ajoute des ennemis.
+
+Assistant:
+GameDefinition v2 de la partie utilisateur
 ```
 
-### Comportement attendu
+Attention :
 
-Lorsque l’utilisateur envoie un message :
+`GameDefinition.version` désigne la version du schéma.
 
-1. le message utilisateur est affiché ;
-2. la zone de saisie est désactivée pendant l’envoi si nécessaire ;
-3. le serveur reçoit la demande ;
-4. le workflow Mastra est lancé ;
-5. un état de progression est affiché ;
-6. le résultat est validé ;
-7. un message assistant résume le jeu créé ;
-8. le jeu généré est ajouté au catalogue ;
-9. le bouton « Tester le jeu » devient disponible.
+La version du jeu créé par l'utilisateur doit utiliser un autre champ si nécessaire :
 
-### Gestion des erreurs
+```text
+revision
+```
 
-En cas d’erreur :
+Ne pas mélanger les deux concepts.
 
-- afficher un message compréhensible ;
-- ne pas ajouter de jeu invalide au catalogue ;
-- permettre à l’utilisateur de réessayer ;
-- journaliser l’erreur côté serveur ;
-- ne jamais afficher la clé API ;
-- ne jamais afficher une stack trace complète à l’utilisateur.
+## Modification
+
+Préférer :
+
+```text
+existing GameDefinition
++
+user requested changes
+→ new complete validated GameDefinition
+```
+
+plutôt qu'une mutation partielle non validée.
 
 ---
 
-## 10. Système agentique Mastra
+# 22. Mastra
 
-Utiliser Mastra comme couche d’orchestration.
+Mastra reste l'unique framework d'orchestration agentique.
 
-Le système doit contenir un agent principal nommé :
+Ne pas ajouter :
+
+- LangGraph ;
+- CrewAI ;
+- AutoGen ;
+- autre orchestrateur ;
+
+sans décision explicite.
+
+## 22.1 Principe workflow-first
+
+Utiliser des workflows déterministes pour les étapes prévisibles.
+
+Exemple cible :
+
+```text
+receive-request
+→ interpret-request
+→ generate-definition
+→ schema-validation
+→ semantic-validation
+→ playability-validation
+→ optional-repair
+→ save
+→ preview
+```
+
+Chaque étape doit avoir :
+
+- responsabilité unique ;
+- entrée typée ;
+- sortie typée ;
+- erreur explicite.
+
+## 22.2 Agent
+
+Conserver un agent principal tant qu'un second agent n'apporte pas un gain démontré.
+
+Exemple :
 
 ```text
 gameDesignerAgent
 ```
 
-Son rôle est de transformer une demande utilisateur en une configuration de jeu valide.
+Le fait qu'un workflow contienne plusieurs étapes ne signifie pas qu'il doit contenir plusieurs agents.
 
-L’agent doit :
+## 22.3 Multi-agent
 
-- comprendre le thème demandé ;
-- identifier le template le plus adapté ;
-- produire une configuration structurée ;
-- respecter les limites numériques ;
-- ne produire aucun code ;
-- ne créer aucun fichier arbitraire ;
-- ne modifier aucun moteur ;
-- ne choisir qu’un template autorisé ;
-- retourner une réponse validable par Zod.
+N'ajouter un nouvel agent que si :
 
-### Instructions de l’agent
+- responsabilité réellement indépendante ;
+- prompt spécialisé nécessaire ;
+- évaluation montre une amélioration mesurable ;
+- coût/latence acceptables ;
+- workflow plus simple ou plus fiable.
 
-L’agent doit privilégier :
+Ne jamais ajouter des agents simplement pour donner une apparence “agentique”.
 
-- la simplicité ;
-- la jouabilité ;
-- des règles compréhensibles ;
-- des durées courtes ;
-- des vitesses raisonnables ;
-- des couleurs CSS valides ;
-- des textes courts ;
-- un niveau de difficulté adapté.
+## 22.4 Structured outputs
 
-L’agent ne doit jamais :
+Toutes les sorties critiques de modèle doivent être structurées et validées.
 
-- générer du TypeScript ;
-- générer du JavaScript ;
-- générer du HTML ;
-- exécuter une commande ;
-- choisir un chemin de fichier ;
-- modifier le catalogue directement ;
-- ajouter une dépendance ;
-- créer un nouveau template.
+Ne jamais parser une réponse Markdown fragile pour obtenir une GameDefinition.
 
----
+## 22.5 Repair
 
-## 11. Workflow Mastra
-
-Créer ou faire évoluer un workflow nommé :
+Maximum recommandé :
 
 ```text
-generateGameWorkflow
+1 réparation structurée
 ```
 
-Le workflow doit contenir les étapes suivantes :
-
-1. `receive-user-request`
-2. `classify-game-template`
-3. `generate-game-config`
-4. `validate-game-config`
-5. `create-catalog-entry`
-6. `save-generated-game`
-7. `return-game-preview`
-
-Chaque étape doit avoir :
-
-- un identifiant explicite ;
-- une entrée typée ;
-- une sortie typée ;
-- une responsabilité unique ;
-- une gestion explicite des erreurs.
-
-Le workflow ne doit pas contenir :
-
-- de boucle infinie ;
-- de génération libre de code ;
-- de parallélisme inutile ;
-- de multi-agent non justifié ;
-- d’accès direct à un shell ;
-- d’écriture dans un chemin arbitraire.
-
-Prévoir au maximum une tentative de correction structurée si la première sortie du modèle échoue à la validation.
-
----
-
-## 12. Architecture technique
-
-Utiliser une structure proche de celle-ci :
+Puis :
 
 ```text
-src/
-├── mastra/
-│   ├── agents/
-│   │   └── game-designer-agent.ts
-│   ├── workflows/
-│   │   └── generate-game-workflow.ts
-│   ├── tools/
-│   │   └── save-generated-game-tool.ts
-│   ├── schemas/
-│   │   ├── generated-game-schema.ts
-│   │   ├── dodge-game-config-schema.ts
-│   │   └── collect-game-config-schema.ts
-│   └── index.ts
-├── app/
-│   ├── components/
-│   │   ├── game-selector.ts
-│   │   ├── game-view.ts
-│   │   ├── chat-panel.ts
-│   │   ├── chat-message.ts
-│   │   └── generation-status.ts
-│   ├── pages/
-│   │   ├── play-page.ts
-│   │   └── create-game-page.ts
-│   ├── services/
-│   │   ├── game-catalog-service.ts
-│   │   └── chat-service.ts
-│   └── index.ts
-├── game/
-│   ├── core/
-│   │   ├── game-engine.ts
-│   │   ├── game-state.ts
-│   │   ├── input.ts
-│   │   └── renderer.ts
-│   ├── templates/
-│   │   ├── dodge/
-│   │   │   ├── dodge-engine.ts
-│   │   │   ├── dodge-config.ts
-│   │   │   └── dodge-renderer.ts
-│   │   └── collect/
-│   │       ├── collect-engine.ts
-│   │       ├── collect-config.ts
-│   │       └── collect-renderer.ts
-│   ├── catalog/
-│   │   ├── built-in-games.ts
-│   │   ├── generated-games.ts
-│   │   └── game-catalog.ts
-│   └── types/
-│       ├── game-config.ts
-│       ├── game-template.ts
-│       └── game-catalog-item.ts
-└── tests/
-    ├── unit/
-    │   ├── dodge-game.test.ts
-    │   ├── collect-game.test.ts
-    │   ├── game-catalog.test.ts
-    │   └── generated-game-schema.test.ts
-    └── e2e/
-        ├── game-selection.spec.ts
-        └── game-generation-chat.spec.ts
-
-public/
-├── index.html
-└── generated-games/
-    └── generated-games.json
+fallback ou erreur contrôlée
 ```
 
-Adapter cette structure à l’état réel du projet.
-
-Ne pas déplacer ou réécrire massivement le projet sans nécessité.
-
-Ne créer de nouveaux dossiers que lorsqu’ils ont une responsabilité claire.
+Pas de boucle automatique illimitée.
 
 ---
 
-## 13. Schémas de données
-
-Utiliser une union discriminée pour représenter les configurations.
-
-### Configuration commune
-
-```ts
-type BaseGameConfig = {
-  id: string;
-  title: string;
-  description: string;
-  theme: string;
-  template: GameTemplate;
-  playerColor: string;
-  backgroundColor: string;
-  playerSpeed: number;
-  gameDurationSeconds: number;
-  victoryMessage: string;
-  defeatMessage: string;
-};
-```
-
-### Jeu d’évitement
-
-```ts
-type DodgeGameConfig = BaseGameConfig & {
-  template: "dodge";
-  obstacleColor: string;
-  obstacleSpeed: number;
-  obstacleSpawnIntervalMs: number;
-};
-```
-
-### Jeu de collecte
-
-```ts
-type CollectGameConfig = BaseGameConfig & {
-  template: "collect";
-  collectibleColor: string;
-  targetCollectibleCount: number;
-  collectibleSpawnIntervalMs: number;
-};
-```
-
-### Type global
-
-```ts
-type GameConfig = DodgeGameConfig | CollectGameConfig;
-```
-
-### Jeu généré
-
-```ts
-type GeneratedGameResult = {
-  game: GameConfig;
-  summary: string;
-  generationId: string;
-  createdAt: string;
-};
-```
-
-Utiliser une union discriminée sur la propriété `template`.
-
-Refuser les propriétés inconnues lorsque cela est possible.
-
----
-
-## 14. Limites de validation
-
-Les valeurs numériques doivent être strictement bornées.
-
-### Limites communes
-
-```text
-playerSpeed : 100 à 600
-gameDurationSeconds : 10 à 120
-title : 3 à 60 caractères
-description : 10 à 240 caractères
-theme : 2 à 80 caractères
-victoryMessage : 2 à 160 caractères
-defeatMessage : 2 à 160 caractères
-```
-
-### Jeu d’évitement
-
-```text
-obstacleSpeed : 50 à 500
-obstacleSpawnIntervalMs : 250 à 3000
-```
-
-### Jeu de collecte
-
-```text
-targetCollectibleCount : 3 à 50
-collectibleSpawnIntervalMs : 250 à 5000
-```
-
-Les couleurs doivent être des valeurs CSS autorisées.
-
-Préférer :
-
-- les couleurs hexadécimales ;
-- les couleurs RGB ;
-- une liste contrôlée de couleurs nommées.
-
-Une configuration invalide ne doit jamais être chargée dans le moteur de jeu.
-
----
-
-## 15. Catalogue de jeux
-
-Le catalogue doit contenir :
-
-- les jeux intégrés ;
-- les jeux générés pendant l’utilisation.
-
-Les deux jeux intégrés doivent être définis séparément des jeux générés.
-
-Exemple :
-
-```ts
-const builtInGames: GameCatalogItem[] = [
-  {
-    id: "dodge-game",
-    title: "Meteor Dodge",
-    description: "Évite les météorites le plus longtemps possible.",
-    template: "dodge",
-    source: "built-in",
-    config: defaultDodgeConfig,
-  },
-  {
-    id: "collect-game",
-    title: "Crystal Collector",
-    description: "Collecte tous les cristaux avant la fin du temps.",
-    template: "collect",
-    source: "built-in",
-    config: defaultCollectConfig,
-  },
-];
-```
-
-Les jeux générés doivent être ajoutés par une fonction dédiée.
-
-Exemple conceptuel :
-
-```ts
-function addGeneratedGame(game: GameCatalogItem): void;
-```
-
-Ne pas modifier directement le tableau depuis les composants d’interface.
-
----
-
-## 16. Persistance des jeux générés
-
-Pour cette version, utiliser une persistance simple.
-
-Solutions autorisées :
-
-- fichier JSON côté serveur ;
-- stockage mémoire pendant la session ;
-- stockage local du navigateur pour la prévisualisation ;
-- combinaison simple de ces solutions.
-
-Ne pas ajouter de base de données sans demande explicite.
-
-Le fichier de stockage doit utiliser un chemin prédéfini.
-
-Le modèle ne doit jamais fournir le chemin d’écriture.
-
-Exemple :
-
-```text
-public/generated-games/generated-games.json
-```
-
-Toute lecture du fichier doit être validée avec Zod.
-
-Toute écriture doit :
-
-- préserver les jeux existants ;
-- éviter les identifiants dupliqués ;
-- être atomique autant que possible ;
-- gérer les erreurs de fichier.
-
----
-
-## 17. Tool de sauvegarde
-
-Créer un tool Mastra nommé :
-
-```text
-saveGeneratedGameTool
-```
-
-Il doit :
-
-- recevoir une configuration validée ;
-- créer une entrée de catalogue ;
-- générer un identifiant sûr ;
-- enregistrer le jeu dans le stockage autorisé ;
-- retourner le jeu enregistré.
-
-Il ne doit pas :
-
-- accepter un chemin fourni par le modèle ;
-- exécuter une commande shell ;
-- supprimer des fichiers ;
-- écrire hors du dossier autorisé ;
-- écrire du code ;
-- modifier les jeux intégrés ;
-- écraser silencieusement un jeu existant.
-
----
-
-## 18. Moteurs de jeu
-
-Chaque moteur doit être déterministe et indépendant du LLM.
-
-Le LLM fournit uniquement une configuration.
-
-Chaque moteur doit gérer :
-
-- l’initialisation ;
-- la boucle de jeu ;
-- les entrées clavier ;
-- le déplacement du joueur ;
-- les collisions ;
-- le score ;
-- le temps ;
-- la victoire ;
-- la défaite ;
-- le redémarrage ;
-- le nettoyage des événements ;
-- l’arrêt propre de `requestAnimationFrame`.
-
-Lorsqu’un utilisateur change de jeu :
-
-- arrêter la boucle active ;
-- retirer les listeners clavier ;
-- réinitialiser l’état ;
-- vider les références ;
-- initialiser le nouveau jeu.
-
-Ne jamais laisser plusieurs boucles de jeu fonctionner simultanément.
-
----
-
-## 19. États de l’application
-
-Utiliser des états explicites.
-
-### État du jeu
-
-```ts
-type GameStatus = "idle" | "loading" | "playing" | "won" | "lost" | "error";
-```
-
-### État de génération
-
-```ts
-type GenerationStatus =
-  | "idle"
-  | "sending"
-  | "analyzing"
-  | "generating"
-  | "validating"
-  | "saving"
-  | "ready"
-  | "error";
-```
-
-L’interface doit refléter ces états.
-
-Éviter de représenter les états métier uniquement avec plusieurs booléens indépendants.
-
----
-
-## 20. API et séparation frontend/backend
-
-Les appels au modèle doivent rester côté serveur.
-
-Le frontend ne doit jamais appeler directement le fournisseur de modèle avec une clé privée.
-
-Prévoir une route ou un endpoint conceptuel :
-
-```text
-POST /api/games/generate
-```
-
-Entrée :
-
-```ts
-type GenerateGameRequest = {
-  prompt: string;
-};
-```
-
-Sortie :
-
-```ts
-type GenerateGameResponse = {
-  success: boolean;
-  result?: GeneratedGameResult;
-  error?: {
-    code: string;
-    message: string;
-  };
-};
-```
-
-Valider l’entrée et la sortie.
-
-Limiter la longueur du prompt utilisateur.
-
-Prévoir un timeout raisonnable.
-
----
-
-## 21. Règles TypeScript
-
-Utiliser TypeScript strict.
-
-Éviter :
-
-- `any` ;
-- `as unknown as` ;
-- les assertions non justifiées ;
-- les fonctions trop longues ;
-- les dépendances inutiles ;
-- les classes sans nécessité ;
-- les états globaux mutables ;
-- les abstractions prématurées ;
-- les composants responsables à la fois de l’IA, du catalogue et du moteur.
-
-Préférer :
-
-- les unions discriminées ;
-- les fonctions pures ;
-- les modules spécialisés ;
-- les schémas Zod ;
-- les noms explicites ;
-- les retours typés ;
-- l’injection de dépendances simple ;
-- les erreurs métier structurées ;
-- les tests proches du comportement réel.
-
-Ne pas désactiver TypeScript pour faire compiler le projet.
-
----
-
-## 22. Sécurité
-
-Considérer comme non fiables :
-
-- les prompts utilisateur ;
-- les sorties du modèle ;
-- les fichiers JSON ;
-- les paramètres d’URL ;
-- les données du stockage local.
+# 23. Sécurité
+
+Considérer comme non fiable :
+
+- prompt utilisateur ;
+- sortie LLM ;
+- JSON ;
+- localStorage ;
+- fichiers ;
+- paramètres URL ;
+- asset metadata ;
+- données de sauvegarde.
 
 Toujours :
 
-- valider avec Zod ;
-- limiter les longueurs ;
-- borner les nombres ;
-- échapper les textes affichés ;
-- garder les clés côté serveur ;
-- utiliser les variables d’environnement ;
-- utiliser une liste fermée de templates ;
-- utiliser un chemin de stockage fixe.
+- valider ;
+- borner ;
+- sanitiser ;
+- limiter ;
+- typer.
 
 Ne jamais :
 
-- exécuter du code généré ;
-- injecter une sortie du modèle avec `innerHTML` ;
-- utiliser `eval` ;
-- utiliser `new Function` ;
-- exécuter une commande shell issue du modèle ;
-- accepter un chemin de fichier issu du modèle ;
-- exposer une clé API ;
-- créer dynamiquement une dépendance ;
-- générer un script arbitraire.
+- `eval` ;
+- `new Function` ;
+- `innerHTML` avec sortie LLM ;
+- shell issu du LLM ;
+- path issu du LLM ;
+- import dynamique arbitraire ;
+- dépendance choisie par le LLM ;
+- code généré exécuté dans le runtime principal ;
+- clé API côté client.
 
 ---
 
-## 23. Expérience utilisateur
+# 24. Gestion des données
 
-Pendant la génération, afficher des messages courts tels que :
+Pour les prochaines phases, conserver une persistance simple tant qu'elle suffit.
+
+Acceptable :
+
+- mémoire ;
+- JSON serveur ;
+- localStorage contrôlé.
+
+N'ajouter une base de données que lorsqu'un besoin produit réel existe, par exemple :
+
+- comptes utilisateurs ;
+- historique durable multi-device ;
+- partage ;
+- collaboration ;
+- analytics utilisateur structurées.
+
+Ne jamais ajouter une base simplement “pour scaler plus tard”.
+
+---
+
+# 25. Performance
+
+Le projet doit rester utilisable :
+
+- dans GitHub Codespaces ;
+- sur machine peu puissante ;
+- dans un navigateur standard.
+
+Ne pas ajouter :
+
+- moteur 3D lourd ;
+- dépendances volumineuses sans justification ;
+- calcul GPU requis ;
+- modèle local obligatoire.
+
+Objectifs généraux :
+
+- une seule boucle de rendu active ;
+- aucun listener orphelin ;
+- pas de mémoire croissante à chaque restart ;
+- génération IA hors boucle de jeu ;
+- runtime indépendant du réseau.
+
+---
+
+# 26. Déterminisme et reproductibilité
+
+Lorsque possible :
 
 ```text
-Analyse de ta demande
-Choix du type de jeu
-Création des règles
-Validation de la configuration
-Préparation du jeu
-Jeu prêt
+GameDefinition
++ seed
+→ même comportement initial
 ```
 
-Ne pas afficher de faux raisonnement détaillé du modèle.
+Prévoir progressivement :
 
-Ne pas afficher les instructions internes de l’agent.
-
-Le bouton « Tester le jeu » ne doit être actif que lorsque :
-
-- la configuration est valide ;
-- le jeu est enregistré ;
-- le template correspondant existe ;
-- le moteur peut être initialisé.
-
----
-
-## 24. Tests unitaires obligatoires
-
-Créer des tests pour :
-
-### Catalogue
-
-- chargement des deux jeux intégrés ;
-- sélection d’un jeu ;
-- ajout d’un jeu généré ;
-- refus d’un identifiant dupliqué ;
-- absence de mutation directe du catalogue.
-
-### Schémas
-
-- configuration `dodge` valide ;
-- configuration `collect` valide ;
-- template inconnu ;
-- durée trop courte ;
-- vitesse trop élevée ;
-- couleur invalide ;
-- propriété inconnue ;
-- prompt trop long.
-
-### Jeu d’évitement
-
-- déplacement du joueur ;
-- apparition d’un obstacle ;
-- collision ;
-- victoire ;
-- défaite ;
-- redémarrage.
-
-### Jeu de collecte
-
-- déplacement du joueur ;
-- apparition d’un objet ;
-- collecte ;
-- incrémentation du score ;
-- victoire ;
-- expiration du temps ;
-- redémarrage.
-
-### Génération
-
-- sélection du template `dodge` ;
-- sélection du template `collect` ;
-- rejet d’une réponse invalide ;
-- création d’une entrée de catalogue ;
-- sauvegarde d’un jeu valide ;
-- gestion d’une erreur du modèle.
-
----
-
-## 25. Tests end-to-end obligatoires
-
-Utiliser Playwright pour vérifier :
-
-### Sélection de jeux
-
-1. la page charge ;
-2. la liste déroulante contient deux jeux ;
-3. le premier jeu peut être lancé ;
-4. le second jeu peut être sélectionné ;
-5. le titre change ;
-6. le moteur précédent est arrêté ;
-7. le nouveau jeu démarre ;
-8. le bouton recommencer fonctionne.
-
-### Chat de génération
-
-1. le chat peut être ouvert ;
-2. un message peut être saisi ;
-3. le message utilisateur apparaît ;
-4. l’état de génération est visible ;
-5. une réponse assistant apparaît ;
-6. le jeu généré est ajouté au catalogue ;
-7. le bouton « Tester le jeu » est actif ;
-8. le jeu généré peut être lancé ;
-9. aucune erreur critique n’apparaît dans la console.
-
-Les appels réels au modèle peuvent être mockés dans les tests end-to-end.
-
-Ne pas dépendre d’une vraie API payante dans les tests automatisés.
-
----
-
-## 26. Commandes attendues
-
-Le projet doit exposer autant que possible :
-
-```bash
-pnpm dev
-pnpm build
-pnpm test
-pnpm test:watch
-pnpm test:e2e
-pnpm typecheck
-pnpm lint
-pnpm format
-pnpm check
+```ts
+type GameSessionOptions = {
+  seed?: number;
+};
 ```
 
-La commande `pnpm check` doit idéalement exécuter :
+La reproductibilité est particulièrement importante pour :
 
-```bash
-pnpm typecheck && pnpm test && pnpm build
-```
+- tests ;
+- simulations ;
+- reproduction de bugs ;
+- évaluation de difficulté.
 
-Ne pas mélanger npm, yarn et pnpm.
-
-Utiliser pnpm comme gestionnaire principal.
+Ne pas forcer le déterminisme si cela complexifie fortement une phase trop tôt.
 
 ---
 
-## 27. Variables d’environnement
+# 27. Règles TypeScript
 
-Utiliser `.env.example`.
+Toujours utiliser TypeScript strict.
+
+Interdit sans justification :
+
+- `any` ;
+- `as unknown as` ;
+- `@ts-ignore` ;
+- `@ts-nocheck` ;
+- assertions forcées pour contourner une erreur.
+
+Préférer :
+
+- unions discriminées ;
+- exhaustive checks ;
+- fonctions pures ;
+- `readonly` lorsque pertinent ;
+- dépendances explicites ;
+- types métiers ;
+- erreurs structurées.
 
 Exemple :
 
-```env
-MASTRA_MODEL=
-MODEL_PROVIDER_API_KEY=
-MAX_GAME_PROMPT_LENGTH=1000
-GENERATED_GAMES_FILE=public/generated-games/generated-games.json
+```ts
+function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${String(value)}`);
+}
 ```
-
-Ne jamais committer de clé réelle.
-
-Dans GitHub Codespaces, utiliser les Codespaces Secrets.
-
-Ne jamais afficher la valeur d’une clé dans les logs.
 
 ---
 
-## 28. Gestion des erreurs
+# 28. Erreurs métier
 
-Créer des erreurs métier explicites.
+Créer des codes explicites.
 
-Exemples :
+Exemple évolutif :
 
 ```ts
-type GameGenerationErrorCode =
+type GameErrorCode =
   | "INVALID_PROMPT"
   | "MODEL_UNAVAILABLE"
   | "INVALID_MODEL_OUTPUT"
-  | "UNSUPPORTED_TEMPLATE"
-  | "VALIDATION_FAILED"
+  | "SCHEMA_VALIDATION_FAILED"
+  | "SEMANTIC_VALIDATION_FAILED"
+  | "PLAYABILITY_VALIDATION_FAILED"
+  | "UNSUPPORTED_MECHANIC"
+  | "INCOMPATIBLE_MECHANICS"
   | "SAVE_FAILED"
-  | "GAME_INITIALIZATION_FAILED";
+  | "ASSET_LOAD_FAILED"
+  | "RUNTIME_INITIALIZATION_FAILED"
+  | "SIMULATION_FAILED";
 ```
 
-Les messages destinés à l’utilisateur doivent être compréhensibles.
-
-Les détails techniques doivent être journalisés côté serveur.
-
-Ne pas masquer silencieusement les erreurs.
+Ne pas exposer la stack complète à l'utilisateur.
 
 ---
 
-## 29. Observabilité minimale
+# 29. Tests
 
-Journaliser au minimum :
+La pyramide de tests doit évoluer avec le projet.
 
-- début de génération ;
-- fin de génération ;
-- modèle utilisé ;
-- template sélectionné ;
-- durée du workflow ;
-- erreur de validation ;
-- erreur de sauvegarde ;
-- identifiant du jeu généré.
+## 29.1 Unit tests
 
-Ne pas journaliser :
+Pour :
 
-- les clés API ;
-- les secrets ;
-- des données sensibles ;
-- les instructions internes complètes ;
-- des prompts sans limite de longueur.
+- schemas ;
+- validation ;
+- mécanique ;
+- système ;
+- collision ;
+- movement ;
+- rules ;
+- goals ;
+- registry ;
+- migration.
 
-Aucune plateforme externe d’observabilité ne doit être ajoutée sans demande explicite.
+## 29.2 Integration tests
+
+Pour :
+
+```text
+GameDefinition
+→ runtime
+→ expected state transition
+```
+
+## 29.3 Evaluation tests
+
+Pour :
+
+```text
+Prompt
+→ generated definition
+→ expected structural properties
+```
+
+Les appels modèles peuvent être :
+
+- mockés pour CI ;
+- exécutés dans une suite séparée manuelle ou contrôlée.
+
+## 29.4 E2E
+
+Playwright doit vérifier les parcours critiques.
+
+Éviter de tester toute la physique avec Playwright.
+
+Playwright sert principalement à :
+
+- UI ;
+- intégration ;
+- navigation ;
+- workflow complet ;
+- absence d'erreur critique.
 
 ---
 
-## 30. Méthode de travail attendue de Claude Code
+# 30. Quality gate
+
+La commande :
+
+```bash
+pnpm check
+```
+
+doit idéalement inclure :
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+Selon coût, les E2E peuvent rester séparés :
+
+```bash
+pnpm test:e2e
+```
+
+Avant validation d'une phase :
+
+```bash
+pnpm check
+pnpm test:e2e
+```
+
+doivent passer.
+
+---
+
+# 31. Evaluation IA
+
+Ne jamais évaluer la génération uniquement par inspection manuelle.
+
+Construire progressivement des critères automatiques.
+
+Exemples :
+
+```text
+schema_valid
+semantic_valid
+playability_valid
+runtime_loads
+required_mechanics_present
+forbidden_mechanics_absent
+goal_exists
+terminal_state_reachable
+```
+
+Les réponses textuelles du LLM peuvent varier.
+
+Les tests doivent donc vérifier des propriétés et non une chaîne exacte.
+
+---
+
+# 32. Observabilité minimale
+
+Tracer progressivement :
+
+```text
+generationId
+gameId
+schemaVersion
+model
+latency
+selectedMechanics
+validationResult
+repairAttempted
+fallbackUsed
+runtimeLoadResult
+simulationResult
+```
+
+Ne pas tracer :
+
+- secrets ;
+- clé API ;
+- chaîne de raisonnement ;
+- données sensibles.
+
+Limiter la taille des prompts stockés.
+
+---
+
+# 33. UX de génération
+
+Afficher des états utiles mais simples.
+
+Exemple :
+
+```text
+Compréhension du jeu
+Création des mécaniques
+Validation
+Vérification de la jouabilité
+Préparation
+Jeu prêt
+```
+
+Ne jamais afficher de faux raisonnement détaillé.
+
+---
+
+# 34. Modification d'un jeu existant
+
+Lorsque la fonctionnalité sera ajoutée :
+
+```text
+current GameDefinition
++
+new user instruction
+→ candidate GameDefinition
+→ validations
+→ new revision
+```
+
+Ne jamais modifier la définition active avant validation complète.
+
+Conserver la dernière version valide si la nouvelle échoue.
+
+---
+
+# 35. Feature flags
+
+Utiliser des feature flags simples pour les fonctions expérimentales lorsque pertinent.
+
+Exemples :
+
+```text
+GENERIC_RUNTIME_ENABLED
+HEADLESS_SIMULATION_ENABLED
+GENERATED_ASSETS_ENABLED
+```
+
+Ne pas créer une plateforme complexe de feature management.
+
+Une configuration environnementale simple suffit.
+
+---
+
+# 36. Compatibilité et migrations
+
+Une GameDefinition sauvegardée ne doit pas casser silencieusement après une évolution du schéma.
+
+Si le schéma change :
+
+```text
+read
+→ detect version
+→ migrate
+→ validate
+```
+
+Créer des migrations explicites seulement lorsqu'elles deviennent nécessaires.
+
+Ne pas construire un framework de migration avant la première incompatibilité réelle.
+
+---
+
+# 37. Documentation des mécaniques
+
+À partir de PHASE 4, chaque mécanique doit avoir une documentation courte.
+
+Exemple :
+
+```text
+docs/mechanics/shoot.md
+```
+
+Contenu :
+
+```text
+Purpose
+Dependencies
+Runtime behavior
+Events emitted
+Actions supported
+Validation rules
+Tests
+```
+
+Cette documentation sert :
+
+- aux développeurs ;
+- à Claude Code ;
+- aux prompts système ;
+- aux évaluations.
+
+---
+
+# 38. Règle d'ajout d'une mécanique
+
+Aucune nouvelle mécanique sans :
+
+1. cas d'usage ;
+2. types ;
+3. schéma ;
+4. runtime ;
+5. validation ;
+6. tests ;
+7. documentation ;
+8. au moins un jeu ou test qui l'utilise.
+
+Ne jamais ajouter une mécanique seulement parce qu'elle “pourrait être utile plus tard”.
+
+---
+
+# 39. Règle d'ajout d'un nouveau type d'entité
+
+Même principe :
+
+```text
+use case
+→ schema
+→ runtime
+→ interaction
+→ tests
+```
+
+Pas de type d'entité vide ou futuriste.
+
+---
+
+# 40. Règle d'ajout d'une dépendance
+
+Avant toute dépendance :
+
+1. expliquer le problème ;
+2. vérifier s'il existe déjà une solution dans le repo ;
+3. évaluer le coût ;
+4. vérifier la maintenance ;
+5. justifier son ajout.
+
+Ne pas ajouter une dépendance pour quelques lignes de code simples.
+
+---
+
+# 41. ECS
+
+Un Entity Component System complet n'est pas un objectif en soi.
+
+Ne l'introduire que si le moteur générique montre des problèmes concrets tels que :
+
+- multiplication des types d'entités ;
+- composition difficile ;
+- duplication forte ;
+- performance de gestion d'entités ;
+- systèmes devenus réellement génériques.
+
+Sinon conserver une architecture de composition simple.
+
+Ne jamais migrer vers un ECS pour suivre une tendance.
+
+---
+
+# 42. Ce qui reste hors périmètre jusqu'à besoin réel
+
+Ne pas développer prématurément :
+
+- multijoueur ;
+- réseau temps réel ;
+- comptes utilisateurs ;
+- paiements ;
+- marketplace ;
+- modération publique ;
+- 3D ;
+- Unreal ;
+- Unity ;
+- Godot ;
+- Kubernetes ;
+- architecture microservices ;
+- base vectorielle ;
+- RAG ;
+- mémoire agent long terme ;
+- blockchain ;
+- système de plugins arbitraires ;
+- génération libre de code ;
+- orchestration multi-agent complexe.
+
+---
+
+# 43. Méthode de travail de Claude Code
 
 Avant toute modification :
 
-1. lire ce fichier ;
-2. lire `package.json` ;
-3. examiner l’architecture existante ;
-4. lire les fichiers concernés ;
-5. identifier le plus petit changement cohérent ;
-6. signaler brièvement les fichiers qui seront modifiés.
+1. lire `CLAUDE.md` ;
+2. lire `docs/current-phase.md` si présent ;
+3. lire `package.json` ;
+4. inspecter `git status` ;
+5. examiner l'architecture ;
+6. identifier les fichiers concernés ;
+7. vérifier la phase actuelle ;
+8. vérifier que la demande appartient à cette phase ;
+9. proposer le plus petit changement cohérent.
 
-Pendant l’implémentation :
+Si la demande appartient à une phase future :
 
-1. conserver le fonctionnement existant ;
-2. ajouter le second jeu sans casser le premier ;
-3. séparer le catalogue, le moteur et l’interface ;
-4. ajouter les schémas avant les appels IA ;
-5. ajouter le chat progressivement ;
-6. ne pas élargir le périmètre ;
-7. ne pas ajouter de dépendance sans justification.
-
-Après les modifications :
-
-1. exécuter `pnpm typecheck` ;
-2. exécuter `pnpm test` ;
-3. exécuter `pnpm build` ;
-4. exécuter les tests Playwright pertinents ;
-5. corriger les erreurs ;
-6. résumer les fichiers modifiés ;
-7. indiquer les commandes exécutées ;
-8. signaler honnêtement les tests non exécutés.
-
-Ne pas réécrire tout le projet si une évolution incrémentale est possible.
+- le signaler ;
+- ne pas l'implémenter automatiquement ;
+- identifier le prérequis manquant.
 
 ---
 
-## 31. Ordre d’implémentation recommandé
+# 44. Workflow obligatoire pour chaque feature
 
-Claude Code doit procéder dans cet ordre.
+Pour chaque feature :
 
-### Étape 1 — Catalogue et sélection
+```text
+SPEC
+→ PLAN
+→ BUILD
+→ TEST
+→ REVIEW
+→ HUMAN VALIDATION
+→ COMMIT
+```
 
-- créer les types communs ;
-- créer le catalogue ;
-- conserver le premier jeu ;
-- ajouter le second jeu ;
-- ajouter la liste déroulante ;
-- permettre de changer de jeu ;
-- gérer le nettoyage du moteur actif ;
-- tester les deux jeux.
+Lorsque les skills correspondants sont disponibles, utiliser le workflow du repository.
 
-### Étape 2 — Interface de chat sans IA réelle
-
-- créer la page ou le panneau de chat ;
-- créer les composants de messages ;
-- créer les états de génération ;
-- mocker une réponse de génération ;
-- ajouter un faux jeu généré au catalogue ;
-- permettre de le tester.
-
-### Étape 3 — Schémas de génération
-
-- créer les schémas Zod ;
-- créer l’union discriminée ;
-- ajouter les limites ;
-- tester toutes les erreurs de validation.
-
-### Étape 4 — Mastra
-
-- créer ou faire évoluer `gameDesignerAgent` ;
-- créer le workflow ;
-- créer ou faire évoluer la sélection de template ;
-- créer ou faire évoluer la génération structurée ;
-- créer ou faire évoluer la sauvegarde ;
-- retourner un résultat validé.
-
-### Étape 5 — Connexion frontend/backend
-
-- connecter le chat à l’endpoint ;
-- afficher la progression ;
-- ajouter le jeu généré ;
-- permettre de le tester ;
-- gérer les erreurs.
-
-### Étape 6 — Tests end-to-end
-
-- tester le sélecteur ;
-- tester les deux jeux ;
-- tester le chat avec modèle mocké ;
-- tester l’ajout au catalogue ;
-- tester le lancement du jeu généré.
-
-Ne pas commencer par l’agent avant d’avoir validé le catalogue, le second jeu et le chat mocké.
+Ne jamais regrouper plusieurs features majeures dans un même plan.
 
 ---
 
-## 32. Hors périmètre actuel
+# 45. Spécification
 
-Ne pas développer pour le moment :
+Avant une feature non triviale :
 
-- plus de deux templates de jeu ;
-- génération de nouveaux moteurs ;
-- génération libre de code ;
-- génération d’assets ;
-- génération de musique ;
-- génération de voix ;
-- 3D ;
-- Godot ;
-- Unity ;
-- Unreal Engine ;
-- sauvegarde cloud ;
-- base de données ;
-- authentification ;
-- paiements ;
-- partage public ;
-- notation des jeux ;
-- marketplace ;
-- multijoueur ;
-- système de plugins ;
-- MCP ;
-- RAG ;
-- mémoire long terme ;
-- plusieurs agents autonomes ;
-- Kubernetes ;
-- Temporal ;
-- Docker distribué.
+définir :
+
+```text
+Problem
+Goal
+Non-goals
+Acceptance criteria
+Affected modules
+Tests
+```
+
+La spécification doit rester courte.
+
+Ne pas transformer chaque changement en document de 20 pages.
 
 ---
 
-## 33. Critères de réussite
+# 46. Plan
 
-La version est considérée comme fonctionnelle lorsque :
+Le plan doit être atomique.
 
-1. l’application démarre ;
-2. la liste déroulante affiche au moins deux jeux ;
-3. le jeu d’évitement fonctionne ;
-4. le jeu de collecte fonctionne ;
-5. il est possible de changer de jeu sans recharger la page ;
-6. l’ancien moteur est correctement arrêté ;
-7. le chat peut être ouvert ;
-8. un utilisateur peut envoyer une demande ;
-9. Mastra produit une configuration structurée ;
-10. la configuration est validée par Zod ;
-11. un jeu généré est ajouté au catalogue ;
-12. le jeu généré peut être sélectionné ;
-13. le jeu généré peut être testé ;
-14. les erreurs sont affichées proprement ;
-15. aucune clé API n’est exposée ;
-16. le typecheck réussit ;
-17. les tests unitaires réussissent ;
-18. le build réussit ;
-19. les tests end-to-end essentiels réussissent.
+Exemple correct :
 
----
+```text
+Task 1
+Add playability result types
 
-## 34. Priorités
+Task 2
+Implement dodge playability validator
 
-Toujours privilégier dans cet ordre :
+Task 3
+Add tests
 
-1. fonctionnement correct ;
-2. simplicité ;
-3. sécurité ;
-4. testabilité ;
-5. expérience utilisateur ;
-6. lisibilité ;
-7. performance ;
-8. extensibilité.
+Task 4
+Connect validator to generation workflow
+```
 
-Ne pas complexifier l’architecture pour anticiper des besoins futurs non confirmés.
+Exemple incorrect :
+
+```text
+Refactor entire engine
+Add ECS
+Add shooter
+Add generic DSL
+Add assets
+```
 
 ---
 
-## 35. Règles de fiabilité du MVP
+# 47. Build
 
-1. Le MVP supporte uniquement les templates `dodge` et `collect`.
-2. Le LLM génère uniquement une configuration structurée, jamais du code exécutable.
-3. Toute sortie du LLM doit être validée par Zod côté serveur.
-4. Toute configuration doit passer un contrôle déterministe de jouabilité.
-5. Chaque moteur doit implémenter correctement `start`, `stop` et `destroy`.
-6. `destroy` doit supprimer les listeners, les timers et les animation frames.
-7. Une nouvelle mécanique ne doit pas être ajoutée sans test unitaire.
-8. Une nouvelle catégorie de jeu ne doit pas être ajoutée sans définition de template, schéma Zod, contrôle de jouabilité et tests.
-9. Aucun `any`, aucun secret côté client, aucun accès direct au modèle depuis le frontend.
-10. Claude doit privilégier les modifications minimales et ne pas refactorer du code sans rapport avec la tâche.
+Pendant l'implémentation :
 
-## 36. Git workflow
+- conserver les comportements existants ;
+- modifier peu de fichiers à la fois ;
+- ajouter les tests proches du changement ;
+- ne pas refactorer des modules sans rapport ;
+- ne pas “nettoyer tout le projet” au passage.
 
-- Implement the plan one validated task at a time.
-- After each atomic task:
-  1. run the relevant tests;
-  2. verify the acceptance criteria;
-  3. stop for human validation when required;
-  4. create a conventional commit only after approval.
-- Never commit failing or incomplete code.
-- Keep commits atomic and independently understandable.
-- Do not push unless explicitly requested.
+---
+
+# 48. Test
+
+Après chaque tâche atomique :
+
+exécuter les tests pertinents.
+
+Avant de considérer une feature terminée :
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+Puis E2E si parcours utilisateur concerné.
+
+---
+
+# 49. Review
+
+Avant validation :
+
+vérifier :
+
+- complexité inutile ;
+- duplication ;
+- sécurité ;
+- lifecycle ;
+- types ;
+- erreurs ;
+- tests ;
+- dépendances ;
+- respect de la phase ;
+- changement de comportement inattendu.
+
+---
+
+# 50. Git workflow
+
+Après chaque tâche atomique validée :
+
+1. tests ;
+2. acceptance criteria ;
+3. validation humaine si demandée ;
+4. commit conventionnel.
+
+Ne jamais :
+
+- commit du code cassé ;
+- push sans demande explicite ;
+- mélanger plusieurs features dans un commit ;
+- réécrire l'historique sans demande.
+
+Exemples :
+
+```text
+feat(game): add playability validation
+test(game): cover extreme dodge configs
+refactor(game): extract collision system
+feat(game): add shooter template
+```
+
+---
+
+# 51. Critère pour passer à la phase suivante
+
+Une phase est terminée uniquement si :
+
+1. tous ses critères de sortie sont satisfaits ;
+2. `pnpm check` passe ;
+3. les E2E pertinents passent ;
+4. aucun bug bloquant connu ;
+5. architecture documentée si nécessaire ;
+6. validation humaine obtenue.
+
+Ensuite seulement :
+
+modifier :
+
+```text
+docs/current-phase.md
+```
+
+pour passer à la phase suivante.
+
+---
+
+# 52. Priorité actuelle recommandée
+
+À partir de l'état actuel du repository, l'ordre immédiat recommandé est :
+
+```text
+1. PHASE 1 — Fiabilisation
+2. PHASE 2 — Shooter
+3. PHASE 3 — Extraction des systèmes communs
+4. PHASE 4 — Mécaniques composables
+5. PHASE 5 — GameDefinition v1
+```
+
+Ne pas commencer `GameDefinition` avant d'avoir appris des besoins réels provenant d'au moins trois templates.
+
+---
+
+# 53. Definition of Done globale
+
+Une modification n'est terminée que si :
+
+- comportement attendu implémenté ;
+- types corrects ;
+- validation présente ;
+- tests présents ;
+- tests passent ;
+- pas de secret ;
+- pas de lifecycle leak ;
+- pas de nouvelle dépendance injustifiée ;
+- documentation mise à jour si contrat modifié ;
+- périmètre de phase respecté.
+
+---
+
+# 54. Objectif produit intermédiaire
+
+Avant de viser littéralement “n'importe quel jeu”, le premier grand objectif produit est :
+
+> permettre de créer rapidement une grande variété de mini-jeux 2D à partir d'un catalogue de mécaniques composables et validées.
+
+Exemples attendus à terme :
+
+```text
+éviter des météorites
+collecter des cristaux
+tirer sur des aliens
+collecter tout en évitant des ennemis
+survivre pendant 60 secondes
+détruire 20 ennemis
+atteindre un score
+mélanger plusieurs de ces mécaniques
+```
+
+Cette étape constitue déjà un produit génératif puissant.
+
+---
+
+# 55. North Star technique
+
+Le principal actif technique du projet doit progressivement devenir :
+
+```text
+GameDefinition
++
+Mechanic Registry
++
+Generic Runtime
++
+Playability Verification
++
+Evaluation Dataset
+```
+
+Le modèle de langage est interchangeable.
+
+La logique métier du moteur ne doit pas dépendre profondément d'un fournisseur de modèle.
+
+---
+
+# 56. Principes finaux
+
+Toujours privilégier :
+
+```text
+constraints over free-form
+structured outputs over text parsing
+deterministic validation over LLM judgment
+composition over code generation
+simulation over intuition
+evaluation over demos
+small migrations over rewrites
+measured complexity over fashionable architecture
+```
+
+L'objectif n'est pas de construire l'architecture la plus impressionnante.
+
+L'objectif est de construire progressivement un système capable de générer de plus en plus de jeux tout en restant :
+
+- fiable ;
+- testable ;
+- contrôlable ;
+- compréhensible ;
+- évolutif.
+
+Si une décision augmente fortement la complexité sans augmenter la capacité réelle de génération de jeux, ne pas la prendre.
