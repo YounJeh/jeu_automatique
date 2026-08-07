@@ -83,14 +83,17 @@ describe("generateGameFromPrompt", () => {
     mockFetchOnce({
       json: async () => ({
         success: false,
-        error: { code: "VALIDATION_FAILED", message: "Jeu non jouable." },
+        error: {
+          code: "PLAYABILITY_VALIDATION_FAILED",
+          message: "Jeu non jouable.",
+        },
       }),
     });
 
     await expect(
       generateGameFromPrompt("un jeu", undefined, 0),
     ).rejects.toMatchObject({
-      code: "VALIDATION_FAILED",
+      code: "PLAYABILITY_VALIDATION_FAILED",
       message: "Jeu non jouable.",
     });
   });

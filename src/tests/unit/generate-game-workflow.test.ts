@@ -26,7 +26,9 @@ describe("validateGameConfig", () => {
       expect.unreachable();
     } catch (error) {
       expect(error).toBeInstanceOf(GameGenerationError);
-      expect((error as GameGenerationError).code).toBe("VALIDATION_FAILED");
+      expect((error as GameGenerationError).code).toBe(
+        "SEMANTIC_VALIDATION_FAILED",
+      );
       expect((error as GameGenerationError).message).toBe(
         "Le nombre d'objets à collecter ne peut pas apparaître avant la fin du temps imparti.",
       );
@@ -51,7 +53,9 @@ describe("validateGameConfig", () => {
       expect.unreachable();
     } catch (error) {
       expect(error).toBeInstanceOf(GameGenerationError);
-      expect((error as GameGenerationError).code).toBe("VALIDATION_FAILED");
+      expect((error as GameGenerationError).code).toBe(
+        "PLAYABILITY_VALIDATION_FAILED",
+      );
       expect((error as GameGenerationError).message).toBe(
         "Les obstacles peuvent occuper toute la largeur de l'écran en continu : l'évitement devient manifestement impossible.",
       );

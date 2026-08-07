@@ -53,7 +53,10 @@ describe("buildGenerateGameResponse", () => {
   it("maps a structured workflow failure to its error code", async () => {
     const source = makeSource(async () => ({
       status: "failed",
-      error: { code: "VALIDATION_FAILED", message: "Jeu non jouable." },
+      error: {
+        code: "PLAYABILITY_VALIDATION_FAILED",
+        message: "Jeu non jouable.",
+      },
     }));
 
     const response = await buildGenerateGameResponse(
@@ -63,7 +66,10 @@ describe("buildGenerateGameResponse", () => {
 
     expect(response).toEqual({
       success: false,
-      error: { code: "VALIDATION_FAILED", message: "Jeu non jouable." },
+      error: {
+        code: "PLAYABILITY_VALIDATION_FAILED",
+        message: "Jeu non jouable.",
+      },
     });
   });
 

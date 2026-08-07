@@ -28,7 +28,9 @@ function isGameGenerationErrorCode(
     code === "MODEL_UNAVAILABLE" ||
     code === "INVALID_MODEL_OUTPUT" ||
     code === "UNSUPPORTED_TEMPLATE" ||
-    code === "VALIDATION_FAILED" ||
+    code === "SCHEMA_VALIDATION_FAILED" ||
+    code === "SEMANTIC_VALIDATION_FAILED" ||
+    code === "PLAYABILITY_VALIDATION_FAILED" ||
     code === "SAVE_FAILED" ||
     code === "GAME_INITIALIZATION_FAILED"
   );

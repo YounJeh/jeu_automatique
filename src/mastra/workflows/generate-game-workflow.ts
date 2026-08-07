@@ -161,7 +161,7 @@ export function validateGameConfig<TConfig extends GameConfig>(
 
   if (!parsed.success) {
     throw new GameGenerationError(
-      "VALIDATION_FAILED",
+      "SCHEMA_VALIDATION_FAILED",
       "La configuration générée n'est pas valide. Réessaie avec une autre description.",
     );
   }
@@ -173,7 +173,7 @@ export function validateGameConfig<TConfig extends GameConfig>(
       (issue) => issue.severity === "error",
     );
     throw new GameGenerationError(
-      "VALIDATION_FAILED",
+      "SEMANTIC_VALIDATION_FAILED",
       firstError?.message ?? "La configuration générée n'est pas cohérente.",
     );
   }
@@ -185,7 +185,7 @@ export function validateGameConfig<TConfig extends GameConfig>(
       (issue) => issue.severity === "error",
     );
     throw new GameGenerationError(
-      "VALIDATION_FAILED",
+      "PLAYABILITY_VALIDATION_FAILED",
       firstError?.message ?? "La configuration générée n'est pas jouable.",
     );
   }
