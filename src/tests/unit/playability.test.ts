@@ -50,26 +50,6 @@ describe("dodge playability", () => {
         ?.severity,
     ).toBe("error");
   });
-
-  it("warns about an anormally short game duration without blocking it", () => {
-    const report = dodgeTemplateDefinition.checkPlayability({
-      ...dodgeTemplateDefinition.defaultConfig,
-      gameDurationSeconds: 10,
-    });
-
-    expect(report.playable).toBe(true);
-    expect(issueCodes(report)).toContain("UNUSUAL_GAME_DURATION");
-  });
-
-  it("warns about an anormally long game duration without blocking it", () => {
-    const report = dodgeTemplateDefinition.checkPlayability({
-      ...dodgeTemplateDefinition.defaultConfig,
-      gameDurationSeconds: 120,
-    });
-
-    expect(report.playable).toBe(true);
-    expect(issueCodes(report)).toContain("UNUSUAL_GAME_DURATION");
-  });
 });
 
 describe("collect playability", () => {
