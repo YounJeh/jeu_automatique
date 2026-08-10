@@ -1,6 +1,7 @@
 import { defaultDodgeConfig } from "../templates/dodge/dodge-config.js";
 import { defaultCollectConfig } from "../templates/collect/collect-config.js";
 import { defaultShooterConfig } from "../templates/shooter/shooter-config.js";
+import { getGamePreset } from "../presets/registry.js";
 import type { GameCatalogItem } from "../types/game-catalog-item.js";
 
 export const builtInGames: GameCatalogItem[] = [
@@ -11,6 +12,7 @@ export const builtInGames: GameCatalogItem[] = [
     template: "dodge",
     source: "built-in",
     config: defaultDodgeConfig,
+    definition: getGamePreset("dodge").definition,
   },
   {
     id: "collect-game",
@@ -19,6 +21,7 @@ export const builtInGames: GameCatalogItem[] = [
     template: "collect",
     source: "built-in",
     config: defaultCollectConfig,
+    definition: getGamePreset("collect").definition,
   },
   {
     id: "shooter-game",
@@ -27,5 +30,6 @@ export const builtInGames: GameCatalogItem[] = [
     template: "shooter",
     source: "built-in",
     config: defaultShooterConfig,
+    definition: getGamePreset("shooter").definition,
   },
 ];
