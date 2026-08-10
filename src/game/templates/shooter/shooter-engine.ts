@@ -5,6 +5,13 @@ import {
   type InputState,
   type Vector2,
 } from "../../core/game-state.js";
+import { partitionByCollision } from "../../systems/collision/collision-system.js";
+import { computeMovement } from "../../systems/movement/movement-system.js";
+import {
+  advanceAndCull,
+  shouldSpawn,
+  type SpawnAccumulator,
+} from "../../systems/spawn/spawn-system.js";
 import {
   SHOOTER_CANVAS_HEIGHT,
   SHOOTER_CANVAS_WIDTH,
@@ -28,8 +35,8 @@ export class ShooterEngine {
   private readonly config: ShooterGameConfig;
   private readonly random: () => number;
   private state: ShooterEngineState;
-  private msSinceLastEnemySpawn = 0;
-  private msSinceLastShot = 0;
+  private enemySpawnAccumulator: SpawnAccumulator = { msSinceLastSpawn: 0 };
+  private shotAccumulator: SpawnAccumulator = { msSinceLastSpawn: 0 };
 
   constructor(config: ShooterGameConfig, random: () => number = Math.random) {
     this.config = config;
@@ -54,8 +61,8 @@ export class ShooterEngine {
   }
 
   reset(): void {
-    this.msSinceLastEnemySpawn = 0;
-    this.msSinceLastShot = 0;
+    this.enemySpawnAccumulator = { msSinceLastSpawn: 0 };
+    this.shotAccumulator = { msSinceLastSpawn: 0 };
     this.state = this.createInitialState();
   }
 
@@ -107,18 +114,17 @@ export class ShooterEngine {
   }
 
   private computePlayerPosition(deltaMs: number, input: InputState): Vector2 {
-    const distance = (this.config.playerSpeed * deltaMs) / 1000;
-    let { x, y } = this.state.player;
-
-    if (input.left) x -= distance;
-    if (input.right) x += distance;
-    if (input.up) y -= distance;
-    if (input.down) y += distance;
-
-    x = Math.max(0, Math.min(SHOOTER_CANVAS_WIDTH - SHOOTER_PLAYER_SIZE, x));
-    y = Math.max(0, Math.min(SHOOTER_CANVAS_HEIGHT - SHOOTER_PLAYER_SIZE, y));
-
-    return { x, y };
+    return computeMovement(
+      this.state.player,
+      this.config.playerSpeed,
+      deltaMs,
+      input,
+      {
+        width: SHOOTER_CANVAS_WIDTH,
+        height: SHOOTER_CANVAS_HEIGHT,
+        size: SHOOTER_PLAYER_SIZE,
+      },
+    );
   }
 
   private computeProjectiles(
@@ -126,37 +132,52 @@ export class ShooterEngine {
     input: InputState,
     player: Vector2,
   ): Vector2[] {
-    this.msSinceLastShot += deltaMs;
+    // The cooldown must only reset when a shot is actually fired (input.fire
+    // held true) — unlike a plain timer-driven spawn, it stays "ready" and
+    // keeps accumulating while the player isn't firing, so shouldSpawn's
+    // unconditional reset-on-threshold can't be reused here without
+    // changing when the next shot becomes available.
+    const msSinceLastShot = this.shotAccumulator.msSinceLastSpawn + deltaMs;
     let projectiles = this.state.projectiles;
 
-    if (input.fire && this.msSinceLastShot >= this.config.fireCooldownMs) {
-      this.msSinceLastShot = 0;
+    if (input.fire && msSinceLastShot >= this.config.fireCooldownMs) {
+      this.shotAccumulator = { msSinceLastSpawn: 0 };
       const x =
         player.x + SHOOTER_PLAYER_SIZE / 2 - SHOOTER_PROJECTILE_SIZE / 2;
       const y = player.y - SHOOTER_PROJECTILE_SIZE;
       projectiles = [...projectiles, { x, y }];
+    } else {
+      this.shotAccumulator = { msSinceLastSpawn: msSinceLastShot };
     }
 
-    const distance = (this.config.projectileSpeed * deltaMs) / 1000;
-    return projectiles
-      .map((projectile) => ({ x: projectile.x, y: projectile.y - distance }))
-      .filter((projectile) => projectile.y + SHOOTER_PROJECTILE_SIZE > 0);
+    return advanceAndCull(
+      projectiles,
+      { x: 0, y: -this.config.projectileSpeed },
+      deltaMs,
+      (position) => position.y + SHOOTER_PROJECTILE_SIZE <= 0,
+    );
   }
 
   private computeEnemies(deltaMs: number): Vector2[] {
-    this.msSinceLastEnemySpawn += deltaMs;
-    let enemies = this.state.enemies;
+    const { spawn, next } = shouldSpawn(
+      this.enemySpawnAccumulator,
+      deltaMs,
+      this.config.enemySpawnIntervalMs,
+    );
+    this.enemySpawnAccumulator = next;
 
-    if (this.msSinceLastEnemySpawn >= this.config.enemySpawnIntervalMs) {
-      this.msSinceLastEnemySpawn = 0;
+    let enemies = this.state.enemies;
+    if (spawn) {
       const x = this.random() * (SHOOTER_CANVAS_WIDTH - SHOOTER_ENEMY_SIZE);
       enemies = [...enemies, { x, y: -SHOOTER_ENEMY_SIZE }];
     }
 
-    const distance = (this.config.enemySpeed * deltaMs) / 1000;
-    return enemies
-      .map((enemy) => ({ x: enemy.x, y: enemy.y + distance }))
-      .filter((enemy) => enemy.y < SHOOTER_CANVAS_HEIGHT + SHOOTER_ENEMY_SIZE);
+    return advanceAndCull(
+      enemies,
+      { x: 0, y: this.config.enemySpeed },
+      deltaMs,
+      (position) => position.y >= SHOOTER_CANVAS_HEIGHT + SHOOTER_ENEMY_SIZE,
+    );
   }
 
   private resolveProjectileCollisions(
@@ -202,28 +223,13 @@ export class ShooterEngine {
     player: Vector2,
     enemies: Vector2[],
   ): { finalEnemies: Vector2[]; damageTaken: number } {
-    const playerRect = {
-      x: player.x,
-      y: player.y,
-      size: SHOOTER_PLAYER_SIZE,
-    };
-    const finalEnemies: Vector2[] = [];
-    let damageTaken = 0;
+    const { hit, remaining } = partitionByCollision(
+      player,
+      SHOOTER_PLAYER_SIZE,
+      enemies,
+      SHOOTER_ENEMY_SIZE,
+    );
 
-    for (const enemy of enemies) {
-      if (
-        rectsOverlap(playerRect, {
-          x: enemy.x,
-          y: enemy.y,
-          size: SHOOTER_ENEMY_SIZE,
-        })
-      ) {
-        damageTaken += 1;
-      } else {
-        finalEnemies.push(enemy);
-      }
-    }
-
-    return { finalEnemies, damageTaken };
+    return { finalEnemies: remaining, damageTaken: hit.length };
   }
 }
