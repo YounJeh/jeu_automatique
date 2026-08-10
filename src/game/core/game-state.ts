@@ -7,6 +7,7 @@ export type InputState = {
   right: boolean;
   up: boolean;
   down: boolean;
+  fire: boolean;
 };
 
 export type Rect = { x: number; y: number; size: number };

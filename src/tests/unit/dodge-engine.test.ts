@@ -18,6 +18,7 @@ const noInput: InputState = {
   right: false,
   up: false,
   down: false,
+  fire: false,
 };
 
 function makeConfig(overrides: Partial<DodgeGameConfig> = {}): DodgeGameConfig {

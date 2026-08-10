@@ -4,6 +4,7 @@ const LEFT_KEYS = new Set(["ArrowLeft", "a", "A", "q", "Q"]);
 const RIGHT_KEYS = new Set(["ArrowRight", "d", "D"]);
 const UP_KEYS = new Set(["ArrowUp", "w", "W", "z", "Z"]);
 const DOWN_KEYS = new Set(["ArrowDown", "s", "S"]);
+const FIRE_KEYS = new Set([" ", "Spacebar"]);
 
 export class InputController {
   private readonly state: InputState = {
@@ -11,6 +12,7 @@ export class InputController {
     right: false,
     up: false,
     down: false,
+    fire: false,
   };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
@@ -26,6 +28,7 @@ export class InputController {
     if (RIGHT_KEYS.has(key)) this.state.right = pressed;
     if (UP_KEYS.has(key)) this.state.up = pressed;
     if (DOWN_KEYS.has(key)) this.state.down = pressed;
+    if (FIRE_KEYS.has(key)) this.state.fire = pressed;
   }
 
   attach(target: Window): void {

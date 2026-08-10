@@ -10,6 +10,7 @@ const noInput: InputState = {
   right: false,
   up: false,
   down: false,
+  fire: false,
 };
 
 const moveTowardOrigin: InputState = {
@@ -17,6 +18,7 @@ const moveTowardOrigin: InputState = {
   right: false,
   up: true,
   down: false,
+  fire: false,
 };
 
 function makeConfig(
