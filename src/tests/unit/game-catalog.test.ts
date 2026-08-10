@@ -24,19 +24,21 @@ function makeGeneratedItem(id: string): GameCatalogItem {
 }
 
 describe("game catalog", () => {
-  it("loads the two built-in games", () => {
+  it("loads the three built-in games", () => {
     const catalog = getCatalog();
 
-    expect(catalog).toHaveLength(2);
+    expect(catalog).toHaveLength(3);
     expect(catalog.map((item) => item.id)).toEqual([
       "dodge-game",
       "collect-game",
+      "shooter-game",
     ]);
   });
 
   it("selects a game by id", () => {
     expect(findGameById("dodge-game")?.template).toBe("dodge");
     expect(findGameById("collect-game")?.template).toBe("collect");
+    expect(findGameById("shooter-game")?.template).toBe("shooter");
     expect(findGameById("unknown-game")).toBeUndefined();
   });
 
@@ -44,7 +46,7 @@ describe("game catalog", () => {
     addGeneratedGame(makeGeneratedItem("collect-custom"));
 
     const catalog = getCatalog();
-    expect(catalog).toHaveLength(3);
+    expect(catalog).toHaveLength(4);
     expect(findGameById("collect-custom")?.source).toBe("generated");
   });
 
@@ -56,6 +58,6 @@ describe("game catalog", () => {
     const catalog = getCatalog();
     catalog.push(makeGeneratedItem("mutated-game"));
 
-    expect(getCatalog()).toHaveLength(2);
+    expect(getCatalog()).toHaveLength(3);
   });
 });

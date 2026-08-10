@@ -1,5 +1,6 @@
 import { defaultDodgeConfig } from "../templates/dodge/dodge-config.js";
 import { defaultCollectConfig } from "../templates/collect/collect-config.js";
+import { defaultShooterConfig } from "../templates/shooter/shooter-config.js";
 import type { GameCatalogItem } from "../types/game-catalog-item.js";
 
 export const builtInGames: GameCatalogItem[] = [
@@ -18,5 +19,13 @@ export const builtInGames: GameCatalogItem[] = [
     template: "collect",
     source: "built-in",
     config: defaultCollectConfig,
+  },
+  {
+    id: "shooter-game",
+    title: defaultShooterConfig.title,
+    description: defaultShooterConfig.description,
+    template: "shooter",
+    source: "built-in",
+    config: defaultShooterConfig,
   },
 ];

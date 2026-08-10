@@ -16,6 +16,7 @@ describe("game-catalog-service", () => {
     expect(listGames().map((item) => item.id)).toEqual([
       "dodge-game",
       "collect-game",
+      "shooter-game",
     ]);
   });
 
@@ -31,7 +32,7 @@ describe("game-catalog-service", () => {
 
     expect(savedItem.source).toBe("generated");
     expect(savedItem.template).toBe("dodge");
-    expect(listGames()).toHaveLength(3);
+    expect(listGames()).toHaveLength(4);
     expect(listGames().map((item) => item.id)).toContain(savedItem.id);
   });
 });
