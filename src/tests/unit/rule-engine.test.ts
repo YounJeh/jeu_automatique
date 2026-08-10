@@ -5,11 +5,13 @@ import type { RuntimeEntity } from "../../game/core/runtime/runtime-state.js";
 
 const obstacle: RuntimeEntity = {
   id: "obstacle-1",
+  definitionId: "obstacle",
   kind: "obstacle",
   position: { x: 0, y: 0 },
 };
 const collectible: RuntimeEntity = {
   id: "collectible-1",
+  definitionId: "collectible",
   kind: "collectible",
   position: { x: 0, y: 0 },
 };
@@ -51,6 +53,7 @@ describe("applyRules", () => {
   it("removes exactly the hitEntities, not every entity of that kind", () => {
     const otherCollectible: RuntimeEntity = {
       id: "collectible-2",
+      definitionId: "collectible",
       kind: "collectible",
       position: { x: 5, y: 5 },
     };

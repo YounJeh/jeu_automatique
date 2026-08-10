@@ -18,14 +18,15 @@ export function shouldSpawn(
   return { spawn: false, next: { msSinceLastSpawn } };
 }
 
-export function advanceAndCull(
-  entities: readonly Vector2[],
+export function advanceAndCull<T extends Vector2>(
+  entities: readonly T[],
   velocity: Vector2,
   deltaMs: number,
   isOffScreen: (position: Vector2) => boolean,
-): Vector2[] {
+): T[] {
   return entities
     .map((entity) => ({
+      ...entity,
       x: entity.x + (velocity.x * deltaMs) / 1000,
       y: entity.y + (velocity.y * deltaMs) / 1000,
     }))
