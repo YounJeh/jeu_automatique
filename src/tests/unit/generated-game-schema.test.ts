@@ -4,6 +4,7 @@ import { dodgeGameConfigSchema } from "../../mastra/schemas/dodge-game-config-sc
 import { collectGameConfigSchema } from "../../mastra/schemas/collect-game-config-schema.js";
 import { defaultDodgeConfig } from "../../game/templates/dodge/dodge-config.js";
 import { defaultCollectConfig } from "../../game/templates/collect/collect-config.js";
+import { defaultShooterConfig } from "../../game/templates/shooter/shooter-config.js";
 
 describe("generated game schema", () => {
   it("accepts a valid dodge configuration", () => {
@@ -16,6 +17,21 @@ describe("generated game schema", () => {
     expect(gameConfigSchema.parse(defaultCollectConfig)).toEqual(
       defaultCollectConfig,
     );
+  });
+
+  it("accepts a valid shooter configuration", () => {
+    expect(gameConfigSchema.parse(defaultShooterConfig)).toEqual(
+      defaultShooterConfig,
+    );
+  });
+
+  it("rejects an invalid shooter configuration", () => {
+    expect(() =>
+      gameConfigSchema.parse({
+        ...defaultShooterConfig,
+        enemySpeed: 999,
+      }),
+    ).toThrow();
   });
 
   it("rejects an unknown template", () => {
