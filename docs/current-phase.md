@@ -1,3 +1,3 @@
-Current phase: PHASE 3
-Goal: Extraire les systèmes réellement dupliqués entre dodge, collect et shooter (par exemple movement, collision, spawn, timer, score, health, projectile, boundary) en modules partagés, sans réécrire les moteurs existants ni construire un ECS complet.
-Exit criteria: duplications importantes réduites entre les trois moteurs ; comportement des trois jeux inchangé ; tests existants toujours verts ; systèmes partagés testés indépendamment ; aucun système spécifique ne dépend de Mastra ; aucune logique IA dans le moteur ; pnpm check et pnpm test:e2e passent.
+Current phase: PHASE 5
+Goal: Introduire GameDefinition v1, une représentation déclarative générique du jeu (metadata, world, player, entities, mechanics, rules, goals, presentation) comme contrat entre le LLM et le moteur, validée par trois couches distinctes (schéma Zod strict, sémantique, jouabilité), sans remplacer les templates existants ni construire le runtime générique (PHASE 6).
+Exit criteria: GameDefinition v1 documentée ; schéma Zod strict ; règles, événements et actions fermés ; validation sémantique et validation jouabilité opérationnelles ; conversion d'au moins un jeu existant (dodge) vers GameDefinition validée sur les trois couches ; tests de sérialisation/désérialisation ; pnpm check et pnpm test:e2e passent.
