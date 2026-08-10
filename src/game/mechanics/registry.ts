@@ -1,5 +1,14 @@
-export type GameMechanic =
-  "move" | "avoid" | "collect" | "shoot" | "health" | "score" | "timer";
+export const GAME_MECHANICS = [
+  "move",
+  "avoid",
+  "collect",
+  "shoot",
+  "health",
+  "score",
+  "timer",
+] as const;
+
+export type GameMechanic = (typeof GAME_MECHANICS)[number];
 
 export type MechanicDefinition = {
   id: GameMechanic;
