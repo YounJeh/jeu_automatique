@@ -1,10 +1,12 @@
 import type { DodgeGameConfig } from "../../../mastra/schemas/dodge-game-config-schema.js";
+import type { GameStatus, InputState, Vector2 } from "../../core/game-state.js";
+import { partitionByCollision } from "../../systems/collision/collision-system.js";
+import { computeMovement } from "../../systems/movement/movement-system.js";
 import {
-  rectsOverlap,
-  type GameStatus,
-  type InputState,
-  type Vector2,
-} from "../../core/game-state.js";
+  advanceAndCull,
+  shouldSpawn,
+  type SpawnAccumulator,
+} from "../../systems/spawn/spawn-system.js";
 import {
   DODGE_CANVAS_HEIGHT,
   DODGE_CANVAS_WIDTH,
@@ -24,7 +26,7 @@ export class DodgeEngine {
   private readonly config: DodgeGameConfig;
   private readonly random: () => number;
   private state: DodgeEngineState;
-  private msSinceLastSpawn = 0;
+  private spawnAccumulator: SpawnAccumulator = { msSinceLastSpawn: 0 };
 
   constructor(config: DodgeGameConfig, random: () => number = Math.random) {
     this.config = config;
@@ -46,7 +48,7 @@ export class DodgeEngine {
   }
 
   reset(): void {
-    this.msSinceLastSpawn = 0;
+    this.spawnAccumulator = { msSinceLastSpawn: 0 };
     this.state = this.createInitialState();
   }
 
@@ -82,46 +84,49 @@ export class DodgeEngine {
   }
 
   private computePlayerPosition(deltaMs: number, input: InputState): Vector2 {
-    const distance = (this.config.playerSpeed * deltaMs) / 1000;
-    let { x, y } = this.state.player;
-
-    if (input.left) x -= distance;
-    if (input.right) x += distance;
-    if (input.up) y -= distance;
-    if (input.down) y += distance;
-
-    x = Math.max(0, Math.min(DODGE_CANVAS_WIDTH - DODGE_PLAYER_SIZE, x));
-    y = Math.max(0, Math.min(DODGE_CANVAS_HEIGHT - DODGE_PLAYER_SIZE, y));
-
-    return { x, y };
+    return computeMovement(
+      this.state.player,
+      this.config.playerSpeed,
+      deltaMs,
+      input,
+      {
+        width: DODGE_CANVAS_WIDTH,
+        height: DODGE_CANVAS_HEIGHT,
+        size: DODGE_PLAYER_SIZE,
+      },
+    );
   }
 
   private computeObstacles(deltaMs: number): Vector2[] {
-    this.msSinceLastSpawn += deltaMs;
-    let obstacles = this.state.obstacles;
+    const { spawn, next } = shouldSpawn(
+      this.spawnAccumulator,
+      deltaMs,
+      this.config.obstacleSpawnIntervalMs,
+    );
+    this.spawnAccumulator = next;
 
-    if (this.msSinceLastSpawn >= this.config.obstacleSpawnIntervalMs) {
-      this.msSinceLastSpawn = 0;
+    let obstacles = this.state.obstacles;
+    if (spawn) {
       const x = this.random() * (DODGE_CANVAS_WIDTH - DODGE_OBSTACLE_SIZE);
       obstacles = [...obstacles, { x, y: -DODGE_OBSTACLE_SIZE }];
     }
 
-    const distance = (this.config.obstacleSpeed * deltaMs) / 1000;
-    return obstacles
-      .map((obstacle) => ({ x: obstacle.x, y: obstacle.y + distance }))
-      .filter(
-        (obstacle) => obstacle.y < DODGE_CANVAS_HEIGHT + DODGE_OBSTACLE_SIZE,
-      );
+    return advanceAndCull(
+      obstacles,
+      { x: 0, y: this.config.obstacleSpeed },
+      deltaMs,
+      (position) => position.y >= DODGE_CANVAS_HEIGHT + DODGE_OBSTACLE_SIZE,
+    );
   }
 
   private hasCollision(player: Vector2, obstacles: Vector2[]): boolean {
-    const playerRect = { x: player.x, y: player.y, size: DODGE_PLAYER_SIZE };
-    return obstacles.some((obstacle) =>
-      rectsOverlap(playerRect, {
-        x: obstacle.x,
-        y: obstacle.y,
-        size: DODGE_OBSTACLE_SIZE,
-      }),
+    return (
+      partitionByCollision(
+        player,
+        DODGE_PLAYER_SIZE,
+        obstacles,
+        DODGE_OBSTACLE_SIZE,
+      ).hit.length > 0
     );
   }
 }
