@@ -8,11 +8,21 @@ import {
 } from "./templates/dodge/dodge-renderer.js";
 import type { CollectEngine } from "./templates/collect/collect-engine.js";
 import { CollectRenderer } from "./templates/collect/collect-renderer.js";
+import type { ShooterEngine } from "./templates/shooter/shooter-engine.js";
+import {
+  ShooterRenderer,
+  type ShooterSprites,
+} from "./templates/shooter/shooter-renderer.js";
 import { getGameTemplateDefinition } from "./templates/game-template-catalog.js";
 
 type ActiveGame =
   | { template: "dodge"; engine: DodgeEngine; renderer: DodgeRenderer }
-  | { template: "collect"; engine: CollectEngine; renderer: CollectRenderer };
+  | { template: "collect"; engine: CollectEngine; renderer: CollectRenderer }
+  | {
+      template: "shooter";
+      engine: ShooterEngine;
+      renderer: ShooterRenderer;
+    };
 
 export type GameControllerUpdate = {
   status: GameStatus;
@@ -61,6 +71,18 @@ export class GameController {
         this.active = { template: "collect", engine, renderer };
         break;
       }
+      case "shooter": {
+        const sprites: ShooterSprites | undefined =
+          item.source === "generated"
+            ? { player: "🚀", enemy: "👾", projectile: "✨" }
+            : undefined;
+        const engine = getGameTemplateDefinition(
+          item.config.template,
+        ).createEngine(item.config);
+        const renderer = new ShooterRenderer(this.canvas, item.config, sprites);
+        this.active = { template: "shooter", engine, renderer };
+        break;
+      }
     }
 
     this.start();
@@ -102,6 +124,12 @@ export class GameController {
         break;
       }
       case "collect": {
+        const state = active.engine.update(deltaMs, this.input.getState());
+        active.renderer.draw(state);
+        this.onUpdate?.({ status: state.status, score: state.score });
+        break;
+      }
+      case "shooter": {
         const state = active.engine.update(deltaMs, this.input.getState());
         active.renderer.draw(state);
         this.onUpdate?.({ status: state.status, score: state.score });
