@@ -3,6 +3,7 @@ import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 import { collectTemplateDefinition } from "../../game/templates/collect/collect-template.js";
 import { dodgeTemplateDefinition } from "../../game/templates/dodge/dodge-template.js";
+import { shooterTemplateDefinition } from "../../game/templates/shooter/shooter-template.js";
 import { listGameTemplateDefinitions } from "../../game/templates/game-template-catalog.js";
 import type { GameTemplateDefinition } from "../../game/templates/game-template-definition.js";
 import { GAME_TEMPLATES } from "../../game/types/game-template.js";
@@ -10,12 +11,23 @@ import { GameGenerationError } from "../errors/game-generation-error.js";
 import { saveGeneratedGameTool } from "../tools/save-generated-game-tool.js";
 import { collectGameConfigSchema } from "../schemas/collect-game-config-schema.js";
 import { dodgeGameConfigSchema } from "../schemas/dodge-game-config-schema.js";
+import { shooterGameConfigSchema } from "../schemas/shooter-game-config-schema.js";
 import { generatedGameCatalogItemSchema } from "../schemas/generated-game-catalog-item-schema.js";
 import {
   gameConfigSchema,
   generatedGameResultSchema,
   type GameConfig,
 } from "../schemas/generated-game-schema.js";
+
+/**
+ * Garantit à la compilation qu'aucune branche exhaustive sur `template`
+ * (CLAUDE.md §27) n'oublie silencieusement un template : si un futur
+ * template est ajouté à GAME_TEMPLATES sans mettre à jour l'appelant,
+ * `value` cesse d'être `never` et tsc échoue avant même l'exécution.
+ */
+function assertNever(value: never): never {
+  throw new Error(`Unexpected template: ${String(value)}`);
+}
 
 const DEFAULT_MAX_GAME_PROMPT_LENGTH = 1000;
 
@@ -131,19 +143,39 @@ const generateGameConfigStep = createStep({
       return response.object;
     }
 
-    const response = await agent.generate(
-      buildGenerationPrompt(collectTemplateDefinition, inputData.prompt),
-      { structuredOutput: { schema: collectGameConfigSchema } },
-    );
-
-    if (!response.object) {
-      throw new GameGenerationError(
-        "MODEL_UNAVAILABLE",
-        "Le modèle n'a pas produit de configuration exploitable.",
+    if (inputData.template === "collect") {
+      const response = await agent.generate(
+        buildGenerationPrompt(collectTemplateDefinition, inputData.prompt),
+        { structuredOutput: { schema: collectGameConfigSchema } },
       );
+
+      if (!response.object) {
+        throw new GameGenerationError(
+          "MODEL_UNAVAILABLE",
+          "Le modèle n'a pas produit de configuration exploitable.",
+        );
+      }
+
+      return response.object;
     }
 
-    return response.object;
+    if (inputData.template === "shooter") {
+      const response = await agent.generate(
+        buildGenerationPrompt(shooterTemplateDefinition, inputData.prompt),
+        { structuredOutput: { schema: shooterGameConfigSchema } },
+      );
+
+      if (!response.object) {
+        throw new GameGenerationError(
+          "MODEL_UNAVAILABLE",
+          "Le modèle n'a pas produit de configuration exploitable.",
+        );
+      }
+
+      return response.object;
+    }
+
+    return assertNever(inputData.template);
   },
 });
 
@@ -200,13 +232,27 @@ const validateGameConfigStep = createStep({
   inputSchema: gameConfigSchema,
   outputSchema: gameConfigSchema,
   execute: async ({ inputData }) => {
-    const candidate = { ...inputData, id: `generated-${randomUUID()}` };
+    const id = `generated-${randomUUID()}`;
 
-    if (candidate.template === "dodge") {
-      return validateGameConfig(dodgeTemplateDefinition, candidate);
+    if (inputData.template === "dodge") {
+      return validateGameConfig(dodgeTemplateDefinition, { ...inputData, id });
     }
 
-    return validateGameConfig(collectTemplateDefinition, candidate);
+    if (inputData.template === "collect") {
+      return validateGameConfig(collectTemplateDefinition, {
+        ...inputData,
+        id,
+      });
+    }
+
+    if (inputData.template === "shooter") {
+      return validateGameConfig(shooterTemplateDefinition, {
+        ...inputData,
+        id,
+      });
+    }
+
+    return assertNever(inputData);
   },
 });
 
@@ -227,6 +273,19 @@ const createCatalogEntryStep = createStep({
   }),
 });
 
+function describeTemplateKind(template: GameConfig["template"]): string {
+  switch (template) {
+    case "dodge":
+      return "jeu d'évitement";
+    case "collect":
+      return "jeu de collecte";
+    case "shooter":
+      return "jeu de tir";
+    default:
+      return assertNever(template);
+  }
+}
+
 const returnGamePreviewStep = createStep({
   id: "return-game-preview",
   description:
@@ -234,8 +293,7 @@ const returnGamePreviewStep = createStep({
   inputSchema: generatedGameCatalogItemSchema,
   outputSchema: generatedGameResultSchema,
   execute: async ({ inputData }) => {
-    const kind =
-      inputData.template === "dodge" ? "jeu d'évitement" : "jeu de collecte";
+    const kind = describeTemplateKind(inputData.template);
 
     return {
       game: inputData.config,
