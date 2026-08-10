@@ -5,11 +5,27 @@ import {
   shouldSpawn,
   type SpawnAccumulator,
 } from "../../systems/spawn/spawn-system.js";
-import type { EntityDefinition } from "../../definition/entity-definition-schema.js";
+import { partitionByCollision } from "../../systems/collision/collision-system.js";
+import type {
+  EntityDefinition,
+  EntityKind,
+} from "../../definition/entity-definition-schema.js";
 import type { GameDefinition } from "../../definition/game-definition-schema.js";
+import type { RuleEvent } from "../../definition/rule-definition-schema.js";
 import type { RandomSource } from "../random/random-source.js";
 import type { GameRuntime } from "./game-runtime.js";
+import { applyRules, type RuleTrigger } from "./rule-engine.js";
 import type { RuntimeEntity, RuntimeState } from "./runtime-state.js";
+
+// Only entity kinds that collide directly with the player map to a rule
+// event here. "projectile" needs N:M projectile<->enemy collision, already
+// excluded from the shared collision system in PHASE 3 (ShooterEngine
+// keeps resolveProjectileCollisions manual) — see tasks/plan.md.
+const COLLISION_EVENT_BY_KIND: Partial<Record<EntityKind, RuleEvent>> = {
+  obstacle: "player-collides-obstacle",
+  collectible: "player-collides-collectible",
+  enemy: "player-collides-enemy",
+};
 
 export class GenericRuntime implements GameRuntime {
   private readonly random: RandomSource;
@@ -97,15 +113,109 @@ export class GenericRuntime implements GameRuntime {
     );
 
     const entities = this.advanceEntities(definition, state.entities, deltaMs);
+    const elapsedMs = state.elapsedMs + deltaMs;
 
-    this.state = {
-      ...state,
+    const collisionTriggers = this.detectCollisionTriggers(
+      definition,
       player,
       entities,
-      elapsedMs: state.elapsedMs + deltaMs,
+    );
+    const tentative = applyRules(definition.rules, collisionTriggers);
+    const projectedScore = state.score + tentative.scoreDelta;
+    const projectedHealth =
+      state.playerHealth === undefined
+        ? undefined
+        : state.playerHealth - tentative.healthDelta;
+
+    const syntheticTriggers = this.detectSyntheticTriggers(
+      definition,
+      elapsedMs,
+      projectedScore,
+      projectedHealth,
+    );
+
+    const outcome = applyRules(definition.rules, [
+      ...collisionTriggers,
+      ...syntheticTriggers,
+    ]);
+
+    const removed = outcome.removedEntityIds;
+    const survivors = entities.filter((e) => !removed.has(e.id));
+    const spawned = outcome.spawnEntityIds
+      .map((id) => definition.entities.find((e) => e.id === id))
+      .filter((def): def is EntityDefinition => def !== undefined)
+      .map((def) => this.spawnEntity(definition, def));
+
+    this.state = {
+      status: outcome.status ?? state.status,
+      score: state.score + outcome.scoreDelta,
+      elapsedMs,
+      player,
+      playerHealth:
+        state.playerHealth === undefined
+          ? undefined
+          : state.playerHealth - outcome.healthDelta,
+      entities: [...survivors, ...spawned],
     };
 
     return this.state;
+  }
+
+  private detectCollisionTriggers(
+    definition: GameDefinition,
+    player: RuntimeState["player"],
+    entities: RuntimeEntity[],
+  ): RuleTrigger[] {
+    const triggers: RuleTrigger[] = [];
+
+    for (const entityDef of definition.entities) {
+      const event = COLLISION_EVENT_BY_KIND[entityDef.kind];
+      if (!event) continue;
+
+      const candidates = entities
+        .filter((e) => e.definitionId === entityDef.id)
+        .map((e) => ({ x: e.position.x, y: e.position.y, ref: e }));
+      if (candidates.length === 0) continue;
+
+      const { hit } = partitionByCollision(
+        player,
+        definition.player.size,
+        candidates,
+        entityDef.size,
+      );
+      if (hit.length === 0) continue;
+
+      triggers.push({ event, hitEntities: hit.map((h) => h.ref) });
+    }
+
+    return triggers;
+  }
+
+  private detectSyntheticTriggers(
+    definition: GameDefinition,
+    elapsedMs: number,
+    projectedScore: number,
+    projectedHealth: number | undefined,
+  ): RuleTrigger[] {
+    const triggers: RuleTrigger[] = [];
+
+    if (
+      definition.world.durationSeconds !== undefined &&
+      elapsedMs / 1000 >= definition.world.durationSeconds
+    ) {
+      triggers.push({ event: "timer-expired", hitEntities: [] });
+    }
+
+    const scoreGoal = definition.goals.find((g) => g.type === "score");
+    if (scoreGoal && projectedScore >= scoreGoal.target) {
+      triggers.push({ event: "score-reached", hitEntities: [] });
+    }
+
+    if (projectedHealth !== undefined && projectedHealth <= 0) {
+      triggers.push({ event: "health-zero", hitEntities: [] });
+    }
+
+    return triggers;
   }
 
   private advanceEntities(

@@ -185,3 +185,177 @@ describe("GenericRuntime — entity spawn/advance", () => {
     expect(calls.length).toBeGreaterThan(0);
   });
 });
+
+describe("GenericRuntime — collision-triggered rules", () => {
+  it("loses when the player collides with an obstacle", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(
+      makeDefinition({
+        entities: [
+          {
+            id: "obstacle",
+            kind: "obstacle",
+            size: 28,
+            speed: 500,
+            spawnIntervalMs: 250,
+            appearance: {
+              type: "shape",
+              shape: "rectangle",
+              color: "#f56565",
+            },
+          },
+        ],
+      }),
+    );
+    runtime.start();
+
+    runtime.update(250, noInput); // spawn aligned with the centered player's x
+    const state = runtime.update(400, noInput); // falls onto the player
+
+    expect(state.status).toBe("lost");
+  });
+});
+
+describe("GenericRuntime — synthetic rule events", () => {
+  it("wins when timer-expired fires (world.durationSeconds reached)", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(makeDefinition());
+    runtime.start();
+
+    const state = runtime.update(30_000, noInput);
+
+    expect(state.status).toBe("won");
+  });
+
+  it("wins when score-reached fires (goal target reached via increase-score)", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(
+      makeDefinition({
+        entities: [
+          {
+            id: "collectible",
+            kind: "collectible",
+            size: 20,
+            spawnIntervalMs: 100,
+            appearance: { type: "shape", shape: "circle", color: "#facc15" },
+          },
+        ],
+        rules: [
+          {
+            when: "player-collides-collectible",
+            then: [
+              { type: "increase-score", amount: 10 },
+              { type: "remove-entity" },
+            ],
+          },
+          { when: "score-reached", then: [{ type: "win-game" }] },
+        ],
+        goals: [{ type: "score", target: 10 }],
+      }),
+    );
+    runtime.start();
+
+    const state = runtime.update(100, noInput);
+
+    expect(state.status).toBe("won");
+    expect(state.score).toBe(10);
+  });
+
+  it("loses when health-zero fires (damage-player exhausts player health)", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(
+      makeDefinition({
+        player: {
+          speed: 220,
+          size: 28,
+          health: 1,
+          appearance: { type: "shape", shape: "rectangle", color: "#4fd1c5" },
+        },
+        entities: [
+          {
+            id: "enemy",
+            kind: "enemy",
+            size: 20,
+            spawnIntervalMs: 100,
+            appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+          },
+        ],
+        rules: [
+          {
+            when: "player-collides-enemy",
+            then: [{ type: "damage-player", amount: 1 }],
+          },
+          { when: "health-zero", then: [{ type: "lose-game" }] },
+        ],
+      }),
+    );
+    runtime.start();
+
+    const state = runtime.update(100, noInput);
+
+    expect(state.status).toBe("lost");
+    expect(state.playerHealth).toBe(0);
+  });
+});
+
+describe("GenericRuntime — lifecycle", () => {
+  it("restart() reloads the last-loaded definition to its initial state", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(
+      makeDefinition({
+        entities: [
+          {
+            id: "obstacle",
+            kind: "obstacle",
+            size: 28,
+            speed: 500,
+            spawnIntervalMs: 250,
+            appearance: {
+              type: "shape",
+              shape: "rectangle",
+              color: "#f56565",
+            },
+          },
+        ],
+      }),
+    );
+    runtime.start();
+    runtime.update(250, noInput);
+    runtime.update(400, noInput);
+    expect(runtime.getState().status).toBe("lost");
+
+    runtime.restart();
+    const state = runtime.getState();
+
+    expect(state.status).toBe("playing");
+    expect(state.elapsedMs).toBe(0);
+    expect(state.entities).toEqual([]);
+  });
+
+  it("destroy() makes update() an inert no-op", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(makeDefinition());
+    runtime.start();
+    runtime.update(100, noInput);
+
+    runtime.destroy();
+    const before = runtime.getState();
+    const after = runtime.update(1000, noInput);
+
+    expect(after).toBe(before);
+  });
+
+  it("never mutates the loaded GameDefinition", () => {
+    const definition = makeDefinition();
+    const snapshot = JSON.parse(JSON.stringify(definition));
+
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(definition);
+    runtime.start();
+    runtime.update(250, noInput);
+    runtime.update(300, noInput);
+    runtime.update(1000, noInput);
+
+    expect(definition).toEqual(snapshot);
+  });
+});
