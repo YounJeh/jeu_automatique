@@ -1,3 +1,3 @@
-Current phase: PHASE 2
-Goal: Ajouter un troisième template (shooter) suffisamment différent de dodge/collect pour révéler les abstractions de gameplay réellement communes, avant d'entamer PHASE 3 (extraction de systèmes partagés).
-Exit criteria: Les trois templates (dodge, collect, shooter) fonctionnent et sont générables par le chat ; validation Zod + semantic + playability pour les trois ; lifecycle complet ; tests unitaires complets ; e2e principaux (dont le spec dédié shooter) verts ; aucune abstraction majeure prématurée ; pnpm check et pnpm test:e2e passent.
+Current phase: PHASE 3
+Goal: Extraire les systèmes réellement dupliqués entre dodge, collect et shooter (par exemple movement, collision, spawn, timer, score, health, projectile, boundary) en modules partagés, sans réécrire les moteurs existants ni construire un ECS complet.
+Exit criteria: duplications importantes réduites entre les trois moteurs ; comportement des trois jeux inchangé ; tests existants toujours verts ; systèmes partagés testés indépendamment ; aucun système spécifique ne dépend de Mastra ; aucune logique IA dans le moteur ; pnpm check et pnpm test:e2e passent.
