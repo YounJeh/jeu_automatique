@@ -1,10 +1,11 @@
 import type { CollectGameConfig } from "../../../mastra/schemas/collect-game-config-schema.js";
+import type { GameStatus, InputState, Vector2 } from "../../core/game-state.js";
+import { partitionByCollision } from "../../systems/collision/collision-system.js";
+import { computeMovement } from "../../systems/movement/movement-system.js";
 import {
-  rectsOverlap,
-  type GameStatus,
-  type InputState,
-  type Vector2,
-} from "../../core/game-state.js";
+  shouldSpawn,
+  type SpawnAccumulator,
+} from "../../systems/spawn/spawn-system.js";
 import {
   COLLECT_CANVAS_HEIGHT,
   COLLECT_CANVAS_WIDTH,
@@ -25,7 +26,7 @@ export class CollectEngine {
   private readonly config: CollectGameConfig;
   private readonly random: () => number;
   private state: CollectEngineState;
-  private msSinceLastSpawn = 0;
+  private spawnAccumulator: SpawnAccumulator = { msSinceLastSpawn: 0 };
   private spawnedCount = 0;
 
   constructor(config: CollectGameConfig, random: () => number = Math.random) {
@@ -49,7 +50,7 @@ export class CollectEngine {
   }
 
   reset(): void {
-    this.msSinceLastSpawn = 0;
+    this.spawnAccumulator = { msSinceLastSpawn: 0 };
     this.spawnedCount = 0;
     this.state = this.createInitialState();
   }
@@ -93,29 +94,29 @@ export class CollectEngine {
   }
 
   private computePlayerPosition(deltaMs: number, input: InputState): Vector2 {
-    const distance = (this.config.playerSpeed * deltaMs) / 1000;
-    let { x, y } = this.state.player;
-
-    if (input.left) x -= distance;
-    if (input.right) x += distance;
-    if (input.up) y -= distance;
-    if (input.down) y += distance;
-
-    x = Math.max(0, Math.min(COLLECT_CANVAS_WIDTH - COLLECT_PLAYER_SIZE, x));
-    y = Math.max(0, Math.min(COLLECT_CANVAS_HEIGHT - COLLECT_PLAYER_SIZE, y));
-
-    return { x, y };
+    return computeMovement(
+      this.state.player,
+      this.config.playerSpeed,
+      deltaMs,
+      input,
+      {
+        width: COLLECT_CANVAS_WIDTH,
+        height: COLLECT_CANVAS_HEIGHT,
+        size: COLLECT_PLAYER_SIZE,
+      },
+    );
   }
 
   private computeCollectibles(deltaMs: number): Vector2[] {
-    this.msSinceLastSpawn += deltaMs;
-    let collectibles = this.state.collectibles;
+    const { spawn, next } = shouldSpawn(
+      this.spawnAccumulator,
+      deltaMs,
+      this.config.collectibleSpawnIntervalMs,
+    );
+    this.spawnAccumulator = next;
 
-    if (
-      this.msSinceLastSpawn >= this.config.collectibleSpawnIntervalMs &&
-      this.spawnedCount < this.config.targetCollectibleCount
-    ) {
-      this.msSinceLastSpawn = 0;
+    let collectibles = this.state.collectibles;
+    if (spawn && this.spawnedCount < this.config.targetCollectibleCount) {
       this.spawnedCount += 1;
       const x =
         this.random() * (COLLECT_CANVAS_WIDTH - COLLECT_COLLECTIBLE_SIZE);
@@ -131,24 +132,13 @@ export class CollectEngine {
     player: Vector2,
     collectibles: Vector2[],
   ): { remaining: Vector2[]; collectedNow: number } {
-    const playerRect = { x: player.x, y: player.y, size: COLLECT_PLAYER_SIZE };
-    const remaining: Vector2[] = [];
-    let collectedNow = 0;
+    const { hit, remaining } = partitionByCollision(
+      player,
+      COLLECT_PLAYER_SIZE,
+      collectibles,
+      COLLECT_COLLECTIBLE_SIZE,
+    );
 
-    for (const collectible of collectibles) {
-      if (
-        rectsOverlap(playerRect, {
-          x: collectible.x,
-          y: collectible.y,
-          size: COLLECT_COLLECTIBLE_SIZE,
-        })
-      ) {
-        collectedNow += 1;
-      } else {
-        remaining.push(collectible);
-      }
-    }
-
-    return { remaining, collectedNow };
+    return { remaining, collectedNow: hit.length };
   }
 }
