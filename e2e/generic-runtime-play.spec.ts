@@ -71,6 +71,42 @@ test.describe("parcours jouer (GenericRuntime)", () => {
     expect(pageErrors).toEqual([]);
   });
 
+  // PHASE 10: survival is GameDefinition-only (no legacy config at all,
+  // unlike dodge/collect/shooter above which all have a legacy fallback)
+  // — this proves the built-in catalog entry gated behind the flag
+  // (built-in-games.ts) actually renders and plays end to end.
+  test("survival-game (générique) est jouable sans erreur", async ({
+    page,
+  }) => {
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error));
+
+    await skipUnlessGenericRuntimeEnabled(page);
+    await page.locator('[data-game-id="survival-game"]').click();
+
+    await expect(page.locator("#game-title")).toHaveText("Survie");
+    await page.keyboard.down("ArrowRight");
+    await page.waitForTimeout(300);
+    await page.keyboard.up("ArrowRight");
+    await expect(page.locator("#game-status")).toContainText("Score");
+    expect(pageErrors).toEqual([]);
+  });
+
+  test("survival-game : restart répété ne casse pas l'UI", async ({ page }) => {
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error));
+
+    await skipUnlessGenericRuntimeEnabled(page);
+    await page.locator('[data-game-id="survival-game"]').click();
+
+    await page.locator("#restart-button").click();
+    await page.locator("#restart-button").click();
+    await page.locator("#restart-button").click();
+
+    await expect(page.locator("#game-status")).toContainText("Score");
+    expect(pageErrors).toEqual([]);
+  });
+
   test("restart répété ne casse pas l'UI en mode générique", async ({
     page,
   }) => {
