@@ -56,7 +56,9 @@ test.describe("parcours créer par chat", () => {
       fulfillJson(route, {
         success: true,
         result: {
+          id: "generated-dodge-1",
           game: GENERATED_GAME,
+          template: "dodge",
           summary: "Un jeu où tu évites des astéroïdes dans l'espace.",
           generationId: "e2e-test-generation-success",
           createdAt: new Date().toISOString(),
@@ -87,7 +89,9 @@ test.describe("parcours créer par chat", () => {
       fulfillJson(route, {
         success: true,
         result: {
+          id: "generated-shooter-1",
           game: GENERATED_SHOOTER_GAME,
+          template: "shooter",
           summary: "Un jeu où tu détruis des envahisseurs venus de l'espace.",
           generationId: "e2e-test-generation-shooter-success",
           createdAt: new Date().toISOString(),

@@ -22,7 +22,9 @@ describe("game-catalog-service", () => {
 
   it("saves a valid generated game to the catalog", () => {
     const result: GeneratedGameResult = {
+      id: "generated-dodge-1",
       game: { ...defaultDodgeConfig, id: "generated-dodge-1" },
+      template: "dodge",
       summary: "Un jeu généré.",
       generationId: "generation-1",
       createdAt: new Date().toISOString(),

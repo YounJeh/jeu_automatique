@@ -25,7 +25,9 @@ afterEach(() => {
 describe("generateGameFromPrompt", () => {
   it("resolves a valid generated game and reports progress, without calling fetch for local validation", async () => {
     const generatedResult = {
+      id: "generated-1",
       game: defaultDodgeConfig,
+      template: "dodge" as const,
       summary: "Un jeu généré.",
       generationId: "generation-1",
       createdAt: new Date().toISOString(),

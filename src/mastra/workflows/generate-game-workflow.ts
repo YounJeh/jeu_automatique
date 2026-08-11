@@ -7,6 +7,8 @@ import { shooterTemplateDefinition } from "../../game/templates/shooter/shooter-
 import { listGameTemplateDefinitions } from "../../game/templates/game-template-catalog.js";
 import type { GameTemplateDefinition } from "../../game/templates/game-template-definition.js";
 import { GAME_TEMPLATES } from "../../game/types/game-template.js";
+import { gameDefinitionSchema } from "../../game/definition/game-definition-schema.js";
+import { isGenericRuntimeEnabled } from "../../game/core/feature-flags.js";
 import { GameGenerationError } from "../errors/game-generation-error.js";
 import { saveGeneratedGameTool } from "../tools/save-generated-game-tool.js";
 import { collectGameConfigSchema } from "../schemas/collect-game-config-schema.js";
@@ -18,6 +20,7 @@ import {
   generatedGameResultSchema,
   type GameConfig,
 } from "../schemas/generated-game-schema.js";
+import { inferGameDefinitionStep } from "./infer-game-definition-step.js";
 
 /**
  * Garantit à la compilation qu'aucune branche exhaustive sur `template`
@@ -296,7 +299,9 @@ const returnGamePreviewStep = createStep({
     const kind = describeTemplateKind(inputData.template);
 
     return {
+      id: inputData.id,
       game: inputData.config,
+      template: inputData.template,
       summary: `J'ai créé un ${kind} intitulé « ${inputData.title} ». Tu peux le tester dès maintenant !`,
       generationId: `generation-${randomUUID()}`,
       createdAt: inputData.createdAt,
@@ -304,18 +309,98 @@ const returnGamePreviewStep = createStep({
   },
 });
 
-export const generateGameWorkflow = createWorkflow({
-  id: "generateGameWorkflow",
+// PHASE 7: analogues of createCatalogEntryStep/returnGamePreviewStep for
+// the mechanics -> GameDefinition pipeline (inferGameDefinitionStep). A
+// GameDefinition-only item has no legacy config — see
+// generatedGameCatalogItemSchema (Task 9) and GameController's guard.
+const createDefinitionCatalogEntryStep = createStep({
+  id: "create-definition-catalog-entry",
   description:
-    "Transforme une demande utilisateur en jeu généré, validé et enregistré.",
-  inputSchema: z.object({ prompt: z.string() }),
+    "Construit l'entrée de catalogue à partir de la GameDefinition validée.",
+  inputSchema: z.object({
+    definition: gameDefinitionSchema,
+    template: z.enum(GAME_TEMPLATES),
+    repaired: z.boolean(),
+    usedFallbackPreset: z.boolean(),
+  }),
+  outputSchema: generatedGameCatalogItemSchema,
+  execute: async ({ inputData }) => ({
+    id: `generated-${randomUUID()}`,
+    title: inputData.definition.metadata.title,
+    description: inputData.definition.metadata.description,
+    template: inputData.template,
+    source: "generated" as const,
+    definition: inputData.definition,
+    createdAt: new Date().toISOString(),
+  }),
+});
+
+const returnGameDefinitionPreviewStep = createStep({
+  id: "return-game-definition-preview",
+  description:
+    "Construit le résultat final pour une GameDefinition générée, prête à être prévisualisée et testée.",
+  inputSchema: generatedGameCatalogItemSchema,
   outputSchema: generatedGameResultSchema,
-})
-  .then(receiveUserRequestStep)
-  .then(classifyGameTemplateStep)
-  .then(generateGameConfigStep)
-  .then(validateGameConfigStep)
-  .then(createCatalogEntryStep)
-  .then(createStep(saveGeneratedGameTool))
-  .then(returnGamePreviewStep)
-  .commit();
+  execute: async ({ inputData }) => {
+    if (!inputData.definition) {
+      // Unreachable in practice: this step only ever follows
+      // createDefinitionCatalogEntryStep, which always sets definition.
+      throw new GameGenerationError(
+        "INVALID_GAME_DEFINITION",
+        "L'entrée de catalogue générée n'a pas de définition de jeu.",
+      );
+    }
+
+    return {
+      id: inputData.id,
+      definition: inputData.definition,
+      template: inputData.template,
+      summary: `J'ai créé un jeu intitulé « ${inputData.title} ». Tu peux le tester dès maintenant !`,
+      generationId: `generation-${randomUUID()}`,
+      createdAt: inputData.createdAt,
+    };
+  },
+});
+
+function buildLegacyGenerateGameWorkflow() {
+  return createWorkflow({
+    id: "generateGameWorkflow",
+    description:
+      "Transforme une demande utilisateur en jeu généré, validé et enregistré (classify -> config).",
+    inputSchema: z.object({ prompt: z.string() }),
+    outputSchema: generatedGameResultSchema,
+  })
+    .then(receiveUserRequestStep)
+    .then(classifyGameTemplateStep)
+    .then(generateGameConfigStep)
+    .then(validateGameConfigStep)
+    .then(createCatalogEntryStep)
+    .then(createStep(saveGeneratedGameTool))
+    .then(returnGamePreviewStep)
+    .commit();
+}
+
+function buildDefinitionGenerateGameWorkflow() {
+  return createWorkflow({
+    id: "generateGameWorkflow",
+    description:
+      "Transforme une demande utilisateur en jeu généré, validé et enregistré (mechanics -> GameDefinition).",
+    inputSchema: z.object({ prompt: z.string() }),
+    outputSchema: generatedGameResultSchema,
+  })
+    .then(receiveUserRequestStep)
+    .then(inferGameDefinitionStep)
+    .then(createDefinitionCatalogEntryStep)
+    .then(createStep(saveGeneratedGameTool))
+    .then(returnGameDefinitionPreviewStep)
+    .commit();
+}
+
+// PHASE 7 §14.2: the classify -> config pipeline is not removed, it stays
+// the default (flag off) fallback until the GameDefinition pipeline is
+// validated. The flag is read once at module load (server startup), same
+// deployment-time granularity as the browser-side flag injection in
+// static-frontend-route.ts — not re-evaluated per request.
+export const generateGameWorkflow = isGenericRuntimeEnabled()
+  ? buildDefinitionGenerateGameWorkflow()
+  : buildLegacyGenerateGameWorkflow();

@@ -7,7 +7,9 @@ describe("generateGameResponseSchema", () => {
     const response = {
       success: true,
       result: {
+        id: "generated-1",
         game: defaultDodgeConfig,
+        template: "dodge",
         summary: "Un jeu généré.",
         generationId: "generation-1",
         createdAt: new Date().toISOString(),

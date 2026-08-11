@@ -64,6 +64,8 @@ describe("generatedGameCatalogItemSchema", () => {
 
 describe("generatedGameResultSchema", () => {
   const baseResult = {
+    id: "generated-1",
+    template: "dodge" as const,
     summary: "Un jeu généré.",
     generationId: "generation-1",
     createdAt: new Date().toISOString(),
