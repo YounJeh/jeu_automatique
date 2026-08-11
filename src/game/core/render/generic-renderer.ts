@@ -2,19 +2,36 @@ import { getAssetById } from "../../assets/asset-catalog.js";
 import type { AppearanceDefinition } from "../../definition/appearance-definition-schema.js";
 import type { GameDefinition } from "../../definition/game-definition-schema.js";
 import type { RuntimeState } from "../runtime/runtime-state.js";
+import { SpriteCache, type SpriteLoader } from "./sprite-cache.js";
+
+function loadImageElement(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () =>
+      reject(new Error(`Impossible de charger le sprite "${src}".`));
+    image.src = src;
+  });
+}
 
 // PHASE 7: canvas renderer driven entirely by a GameDefinition + the
 // RuntimeState produced by GenericRuntime.
 //
-// PHASE 9: appearance.type === "sprite" always draws its catalog
-// fallbackColor for now — real image loading with a SpriteCache lands in
-// the next increment. This keeps the union exhaustive and the renderer
-// compilable/safe at every intermediate step (never blank, never throws).
+// PHASE 9: appearance.type === "sprite" draws the loaded image once
+// SpriteCache reports "loaded"; before that (idle/loading) and on load
+// failure ("error") it draws the catalog's fallbackColor instead — a
+// broken or slow-loading asset never blocks or crashes the render loop.
 export class GenericRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly definition: GameDefinition;
+  private readonly spriteCache = new SpriteCache<HTMLImageElement>();
+  private readonly spriteLoader: SpriteLoader<HTMLImageElement>;
 
-  constructor(canvas: HTMLCanvasElement, definition: GameDefinition) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    definition: GameDefinition,
+    spriteLoader: SpriteLoader<HTMLImageElement> = loadImageElement,
+  ) {
     canvas.width = definition.world.width;
     canvas.height = definition.world.height;
 
@@ -25,6 +42,7 @@ export class GenericRenderer {
 
     this.ctx = ctx;
     this.definition = definition;
+    this.spriteLoader = spriteLoader;
   }
 
   draw(state: RuntimeState): void {
@@ -78,9 +96,7 @@ export class GenericRenderer {
     size: number,
   ): void {
     if (appearance.type === "sprite") {
-      this.ctx.fillStyle =
-        getAssetById(appearance.assetId)?.fallbackColor ?? "#888888";
-      this.ctx.fillRect(x, y, size, size);
+      this.drawSprite(appearance.assetId, x, y, size);
       return;
     }
 
@@ -107,6 +123,32 @@ export class GenericRenderer {
         return;
       }
     }
+  }
+
+  private drawSprite(
+    assetId: string,
+    x: number,
+    y: number,
+    size: number,
+  ): void {
+    const asset = getAssetById(assetId);
+
+    if (asset) {
+      if (this.spriteCache.getStatus(assetId) === "idle") {
+        this.spriteCache.request(assetId, asset.src, this.spriteLoader);
+      }
+
+      const image = this.spriteCache.getImage(assetId);
+      if (image) {
+        this.ctx.drawImage(image, x, y, size, size);
+        return;
+      }
+    }
+
+    // Not loaded yet, load failed, or (defensively) unknown assetId:
+    // fall back to a plain rectangle rather than leave the entity blank.
+    this.ctx.fillStyle = asset?.fallbackColor ?? "#888888";
+    this.ctx.fillRect(x, y, size, size);
   }
 
   private drawScore(state: RuntimeState): void {
