@@ -16,6 +16,7 @@ import { createSemanticValidator } from "../../game/validation/semantic/semantic
 import { createPlayabilityValidator } from "../../game/validation/playability/playability-validator.js";
 import { isGenericRuntimeCapable } from "../../game/core/runtime/generic-runtime-capability.js";
 import { GenericRuntime } from "../../game/core/runtime/generic-runtime.js";
+import { runHeadlessSimulation } from "../../game/simulation/headless-simulation.js";
 import { dodgeGameDefinitionExample } from "../../game/definition/examples/dodge-game-definition.js";
 import { dodgePreset } from "../../game/presets/dodge.js";
 import { collectPreset } from "../../game/presets/collect.js";
@@ -208,6 +209,12 @@ describe("game-generation-cases eval dataset", () => {
       expect(result.usedFallbackPreset).toBe(
         testCase.expected.usedFallbackPreset,
       );
+    }
+
+    if (testCase.expectedSimulation) {
+      const { runs, seed, maxRuntimeErrors } = testCase.expectedSimulation;
+      const metrics = runHeadlessSimulation(definition, { runs, seed });
+      expect(metrics.runtimeErrors).toBeLessThanOrEqual(maxRuntimeErrors);
     }
   });
 });

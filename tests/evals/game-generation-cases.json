@@ -11,6 +11,11 @@
       "runtimeLoads": true,
       "repaired": false,
       "usedFallbackPreset": false
+    },
+    "expectedSimulation": {
+      "runs": 20,
+      "seed": 1,
+      "maxRuntimeErrors": 0
     }
   },
   {
@@ -25,6 +30,11 @@
       "runtimeLoads": true,
       "repaired": false,
       "usedFallbackPreset": false
+    },
+    "expectedSimulation": {
+      "runs": 20,
+      "seed": 1,
+      "maxRuntimeErrors": 0
     }
   },
   {

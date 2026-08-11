@@ -25,6 +25,21 @@ export const evalCaseSchema = z
         usedFallbackPreset: z.boolean().optional(),
       })
       .strict(),
+    // Optional: run a real headless simulation batch (runHeadlessSimulation)
+    // and assert on its runtimeErrors. Only meaningful for
+    // GenericRuntime-capable, stable definitions (known presets) — omitted
+    // for mocked/fallback cases where the resulting definition isn't fixed
+    // ahead of time. No minWinRate here on purpose: a random-walk policy's
+    // win rate isn't a reliable pass/fail signal yet (tasks/plan.md, Open
+    // Questions).
+    expectedSimulation: z
+      .object({
+        runs: z.number().int().positive(),
+        seed: z.number(),
+        maxRuntimeErrors: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
