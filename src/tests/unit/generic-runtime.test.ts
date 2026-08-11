@@ -186,6 +186,109 @@ describe("GenericRuntime — entity spawn/advance", () => {
   });
 });
 
+describe("GenericRuntime — seek movementPattern", () => {
+  function makeSeekDefinition(
+    overrides: Partial<GameDefinition> = {},
+  ): GameDefinition {
+    return makeDefinition({
+      entities: [
+        {
+          id: "chaser",
+          kind: "enemy",
+          size: 20,
+          speed: 100,
+          spawnIntervalMs: 250,
+          movementPattern: "seek",
+          appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+        },
+      ],
+      rules: [
+        { when: "player-collides-enemy", then: [{ type: "lose-game" }] },
+        { when: "timer-expired", then: [{ type: "win-game" }] },
+      ],
+      ...overrides,
+    });
+  }
+
+  it("spawns a seek entity outside the world instead of always at the top", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(makeSeekDefinition());
+    runtime.start();
+
+    // edge = floor(0.5 * 4) = 2 ("bottom"), along = 0.5 -> spawns near
+    // (230, 640), then takes one seek step toward the player this same
+    // tick (same convention as "fall" entities, see the "spawns a moving
+    // entity" test above) — so it ends up close to, not exactly at, the
+    // bottom edge, and nowhere near the top-spawn y = -size.
+    const state = runtime.update(250, noInput);
+    const chaser = state.entities.find((e) => e.definitionId === "chaser");
+
+    expect(chaser).toBeDefined();
+    expect(chaser!.position.x).toBeCloseTo(230, 0);
+    expect(chaser!.position.y).toBeGreaterThan(600);
+  });
+
+  it("moves a seek entity closer to the player on each update, never culled by position", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(makeSeekDefinition());
+    runtime.start();
+
+    const afterSpawn = runtime.update(250, noInput);
+    const spawned = afterSpawn.entities.find(
+      (e) => e.definitionId === "chaser",
+    )!;
+    const initialDistance = Math.hypot(
+      spawned.position.x - afterSpawn.player.x,
+      spawned.position.y - afterSpawn.player.y,
+    );
+
+    // Long enough to travel well past the world bounds if it were "falling".
+    const after = runtime.update(5000, noInput);
+    const chaser = after.entities.find((e) => e.id === spawned.id);
+
+    expect(chaser).toBeDefined();
+    const newDistance = Math.hypot(
+      chaser!.position.x - after.player.x,
+      chaser!.position.y - after.player.y,
+    );
+    expect(newDistance).toBeLessThan(initialDistance);
+  });
+
+  it("does not affect a sibling fall entity's behavior", () => {
+    const runtime = new GenericRuntime(() => 0.5);
+    runtime.load(
+      makeSeekDefinition({
+        entities: [
+          {
+            id: "chaser",
+            kind: "enemy",
+            size: 20,
+            speed: 100,
+            spawnIntervalMs: 250,
+            movementPattern: "seek",
+            appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+          },
+          {
+            id: "obstacle",
+            kind: "obstacle",
+            size: 28,
+            speed: 160,
+            spawnIntervalMs: 250,
+            appearance: { type: "shape", shape: "rectangle", color: "#f56565" },
+          },
+        ],
+      }),
+    );
+    runtime.start();
+
+    const afterSpawn = runtime.update(250, noInput);
+    const obstacle = afterSpawn.entities.find(
+      (e) => e.definitionId === "obstacle",
+    );
+    expect(obstacle!.position.y).toBeCloseTo(12);
+  });
+});
+
 describe("GenericRuntime — collision-triggered rules", () => {
   it("loses when the player collides with an obstacle", () => {
     const runtime = new GenericRuntime(() => 0.5);

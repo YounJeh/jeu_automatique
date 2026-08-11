@@ -1,5 +1,8 @@
-import type { InputState } from "../game-state.js";
-import { computeMovement } from "../../systems/movement/movement-system.js";
+import type { InputState, Vector2 } from "../game-state.js";
+import {
+  computeMovement,
+  computeSeekStep,
+} from "../../systems/movement/movement-system.js";
 import {
   advanceAndCull,
   shouldSpawn,
@@ -112,7 +115,12 @@ export class GenericRuntime implements GameRuntime {
       },
     );
 
-    const entities = this.advanceEntities(definition, state.entities, deltaMs);
+    const entities = this.advanceEntities(
+      definition,
+      state.entities,
+      player,
+      deltaMs,
+    );
     const elapsedMs = state.elapsedMs + deltaMs;
 
     const collisionTriggers = this.detectCollisionTriggers(
@@ -221,6 +229,7 @@ export class GenericRuntime implements GameRuntime {
   private advanceEntities(
     definition: GameDefinition,
     current: RuntimeEntity[],
+    player: Vector2,
     deltaMs: number,
   ): RuntimeEntity[] {
     let entities = current;
@@ -230,6 +239,7 @@ export class GenericRuntime implements GameRuntime {
         definition,
         entityDef,
         entities,
+        player,
         deltaMs,
       );
     }
@@ -241,6 +251,7 @@ export class GenericRuntime implements GameRuntime {
     definition: GameDefinition,
     entityDef: EntityDefinition,
     current: RuntimeEntity[],
+    player: Vector2,
     deltaMs: number,
   ): RuntimeEntity[] {
     let entities = current;
@@ -259,7 +270,20 @@ export class GenericRuntime implements GameRuntime {
       }
     }
 
-    if (entityDef.speed !== undefined) {
+    if (entityDef.movementPattern === "seek" && entityDef.speed !== undefined) {
+      // Recomputed every frame from the player's current position, never
+      // culled by position — the entity stays relevant until removed by a
+      // rule (e.g. a player collision), unlike "fall" entities below.
+      const speed = entityDef.speed;
+      entities = entities.map((e) =>
+        e.definitionId === entityDef.id
+          ? {
+              ...e,
+              position: computeSeekStep(e.position, player, speed, deltaMs),
+            }
+          : e,
+      );
+    } else if (entityDef.speed !== undefined) {
       const others = entities.filter((e) => e.definitionId !== entityDef.id);
       const flat = entities
         .filter((e) => e.definitionId === entityDef.id)
@@ -290,16 +314,7 @@ export class GenericRuntime implements GameRuntime {
     const count = this.spawnCounters.get(entityDef.id) ?? 0;
     this.spawnCounters.set(entityDef.id, count + 1);
 
-    const position =
-      entityDef.speed !== undefined
-        ? {
-            x: this.random() * (definition.world.width - entityDef.size),
-            y: -entityDef.size,
-          }
-        : {
-            x: this.random() * (definition.world.width - entityDef.size),
-            y: this.random() * (definition.world.height - entityDef.size),
-          };
+    const position = this.spawnPosition(definition, entityDef);
 
     return {
       id: `${entityDef.id}-${count}`,
@@ -307,9 +322,51 @@ export class GenericRuntime implements GameRuntime {
       kind: entityDef.kind,
       position,
       velocity:
-        entityDef.speed !== undefined
+        entityDef.movementPattern !== "seek" && entityDef.speed !== undefined
           ? { x: 0, y: entityDef.speed }
           : undefined,
     };
+  }
+
+  private spawnPosition(
+    definition: GameDefinition,
+    entityDef: EntityDefinition,
+  ): Vector2 {
+    if (entityDef.movementPattern === "seek") {
+      return this.randomEdgePosition(definition.world, entityDef.size);
+    }
+
+    if (entityDef.speed !== undefined) {
+      return {
+        x: this.random() * (definition.world.width - entityDef.size),
+        y: -entityDef.size,
+      };
+    }
+
+    return {
+      x: this.random() * (definition.world.width - entityDef.size),
+      y: this.random() * (definition.world.height - entityDef.size),
+    };
+  }
+
+  // Spawns "seek" entities just outside a random edge of the world so they
+  // enter from all directions, not only from the top like "fall" entities.
+  private randomEdgePosition(
+    world: { width: number; height: number },
+    size: number,
+  ): Vector2 {
+    const edge = Math.floor(this.random() * 4);
+    const along = this.random();
+
+    switch (edge) {
+      case 0: // top
+        return { x: along * (world.width - size), y: -size };
+      case 1: // right
+        return { x: world.width, y: along * (world.height - size) };
+      case 2: // bottom
+        return { x: along * (world.width - size), y: world.height };
+      default: // left
+        return { x: -size, y: along * (world.height - size) };
+    }
   }
 }
