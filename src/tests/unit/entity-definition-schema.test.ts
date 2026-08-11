@@ -58,4 +58,27 @@ describe("entityDefinitionSchema", () => {
         .success,
     ).toBe(false);
   });
+
+  it("accepts movementPattern absent (defaults to fall behavior)", () => {
+    expect(entityDefinitionSchema.safeParse(validEntity).success).toBe(true);
+  });
+
+  it.each(["fall", "seek"] as const)(
+    "accepts movementPattern: %s",
+    (movementPattern) => {
+      expect(
+        entityDefinitionSchema.safeParse({ ...validEntity, movementPattern })
+          .success,
+      ).toBe(true);
+    },
+  );
+
+  it("rejects a movementPattern outside the closed union", () => {
+    expect(
+      entityDefinitionSchema.safeParse({
+        ...validEntity,
+        movementPattern: "bounce",
+      }).success,
+    ).toBe(false);
+  });
 });
