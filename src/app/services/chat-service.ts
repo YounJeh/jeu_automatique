@@ -1,4 +1,7 @@
-import { GameGenerationError } from "../../mastra/errors/game-generation-error.js";
+import {
+  GAME_GENERATION_ERROR_CODES,
+  GameGenerationError,
+} from "../../mastra/errors/game-generation-error.js";
 import type { GameGenerationErrorCode } from "../../mastra/errors/game-generation-error.js";
 import {
   generateGameResponseSchema,
@@ -20,20 +23,13 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Derived from the single source of truth (GAME_GENERATION_ERROR_CODES)
+// rather than a hand-copied list — a hand-copied list is exactly what let
+// this drift out of sync with GameGenerationErrorCode once before.
 function isGameGenerationErrorCode(
   code: string,
 ): code is GameGenerationErrorCode {
-  return (
-    code === "INVALID_PROMPT" ||
-    code === "MODEL_UNAVAILABLE" ||
-    code === "INVALID_MODEL_OUTPUT" ||
-    code === "UNSUPPORTED_TEMPLATE" ||
-    code === "SCHEMA_VALIDATION_FAILED" ||
-    code === "SEMANTIC_VALIDATION_FAILED" ||
-    code === "PLAYABILITY_VALIDATION_FAILED" ||
-    code === "SAVE_FAILED" ||
-    code === "GAME_INITIALIZATION_FAILED"
-  );
+  return (GAME_GENERATION_ERROR_CODES as readonly string[]).includes(code);
 }
 
 /**

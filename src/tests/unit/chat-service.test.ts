@@ -98,6 +98,25 @@ describe("generateGameFromPrompt", () => {
     });
   });
 
+  it("propagates the PHASE 7 GameDefinition error codes rather than falling back", async () => {
+    mockFetchOnce({
+      json: async () => ({
+        success: false,
+        error: {
+          code: "INVALID_GAME_DEFINITION",
+          message: "Définition invalide.",
+        },
+      }),
+    });
+
+    await expect(
+      generateGameFromPrompt("un jeu", undefined, 0),
+    ).rejects.toMatchObject({
+      code: "INVALID_GAME_DEFINITION",
+      message: "Définition invalide.",
+    });
+  });
+
   it("falls back to MODEL_UNAVAILABLE for an unrecognized error code", async () => {
     mockFetchOnce({
       json: async () => ({
