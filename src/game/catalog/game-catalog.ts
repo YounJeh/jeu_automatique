@@ -1,10 +1,10 @@
-import { builtInGames } from "./built-in-games.js";
+import { getBuiltInGames } from "./built-in-games.js";
 import type { GameCatalogItem } from "../types/game-catalog-item.js";
 
 const generatedGames: GameCatalogItem[] = [];
 
 export function getCatalog(): GameCatalogItem[] {
-  return [...builtInGames, ...generatedGames];
+  return [...getBuiltInGames(), ...generatedGames];
 }
 
 export function findGameById(id: string): GameCatalogItem | undefined {
