@@ -29,8 +29,15 @@ function threatEntities(definition: GameDefinition): EntityDefinition[] {
   return definition.entities.filter(
     (entity) =>
       (entity.kind === "obstacle" || entity.kind === "enemy") &&
+      entity.movementPattern !== "seek" &&
       entity.speed !== undefined &&
       entity.spawnIntervalMs !== undefined,
+  );
+}
+
+function seekEntities(definition: GameDefinition): EntityDefinition[] {
+  return definition.entities.filter(
+    (entity) => entity.movementPattern === "seek" && entity.speed !== undefined,
   );
 }
 
@@ -94,5 +101,39 @@ function checkEntityPressure(
   return null;
 }
 
+/**
+ * `checkEntityCoverage`/`checkEntityPressure` assume an entity that falls
+ * in a straight line (`fallTimeMs = world.height / speed`), which has no
+ * meaning for an entity converging on a moving target — "seek" entities
+ * are excluded from both (see `threatEntities`) and get this dedicated,
+ * deterministic check instead: a pursuer at least as fast as the player
+ * can structurally never be outrun once it has a line on the player.
+ * Warning, not error — depending on spawn rate and world size this can
+ * still be a deliberate, playable design (CLAUDE.md §8.1: prefer simple
+ * deterministic rules over a full escape simulation).
+ */
+function checkSeekEntityEscapable(
+  definition: GameDefinition,
+): ValidationIssue | null {
+  const { player } = definition;
+
+  for (const entity of seekEntities(definition)) {
+    if (entity.speed! < player.speed) continue;
+
+    return {
+      severity: "warning",
+      code: "EXCESSIVE_SEEK_SPEED",
+      message: `L'entité "${entity.id}" (movementPattern "seek") est au moins aussi rapide que le joueur : une fois repérée, elle ne peut structurellement jamais être semée.`,
+    };
+  }
+
+  return null;
+}
+
 export const gameDefinitionPlayabilityRules: PlayabilityRule<GameDefinition>[] =
-  [checkPlayerFitsWorld, checkEntityCoverage, checkEntityPressure];
+  [
+    checkPlayerFitsWorld,
+    checkEntityCoverage,
+    checkEntityPressure,
+    checkSeekEntityEscapable,
+  ];

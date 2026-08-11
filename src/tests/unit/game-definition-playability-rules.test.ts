@@ -101,6 +101,79 @@ describe("gameDefinitionPlayabilityRules", () => {
     });
   });
 
+  it("does not apply fall-specific coverage/pressure formulas to a seek entity", () => {
+    const definition: GameDefinition = {
+      ...playableDefinition,
+      entities: [
+        {
+          id: "chaser",
+          kind: "enemy",
+          size: 20,
+          speed: 500,
+          spawnIntervalMs: 100,
+          movementPattern: "seek",
+          appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+        },
+      ],
+    };
+
+    const report = validator.validate(definition);
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.code === "ENTITY_COVERS_WORLD" ||
+          issue.code === "EXCESSIVE_ENTITY_PRESSURE",
+      ),
+    ).toBe(false);
+  });
+
+  it("warns when a seek entity is at least as fast as the player", () => {
+    const definition: GameDefinition = {
+      ...playableDefinition,
+      player: { ...playableDefinition.player, speed: 150 },
+      entities: [
+        {
+          id: "chaser",
+          kind: "enemy",
+          size: 20,
+          speed: 150,
+          spawnIntervalMs: 1000,
+          movementPattern: "seek",
+          appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+        },
+      ],
+    };
+
+    const report = validator.validate(definition);
+    expect(
+      report.issues.some((issue) => issue.code === "EXCESSIVE_SEEK_SPEED"),
+    ).toBe(true);
+  });
+
+  it("does not warn when a seek entity is slower than the player", () => {
+    const definition: GameDefinition = {
+      ...playableDefinition,
+      player: { ...playableDefinition.player, speed: 220 },
+      entities: [
+        {
+          id: "chaser",
+          kind: "enemy",
+          size: 20,
+          speed: 100,
+          spawnIntervalMs: 1000,
+          movementPattern: "seek",
+          appearance: { type: "shape", shape: "circle", color: "#e53e3e" },
+        },
+      ],
+    };
+
+    const report = validator.validate(definition);
+    expect(
+      report.issues.some((issue) => issue.code === "EXCESSIVE_SEEK_SPEED"),
+    ).toBe(false);
+    expect(report.playable).toBe(true);
+  });
+
   it("ignores entities without both speed and spawnIntervalMs", () => {
     const definition: GameDefinition = {
       ...playableDefinition,
