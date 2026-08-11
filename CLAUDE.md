@@ -2493,16 +2493,7 @@ Une phase est terminée uniquement si :
 4. aucun bug bloquant connu ;
 5. architecture documentée si nécessaire ;
 6. validation humaine obtenue.
-
-Ensuite seulement :
-
-modifier :
-
-```text
-docs/current-phase.md
-```
-
-pour passer à la phase suivante.
+7. modifier docs/current-phase.md
 
 ---
 
