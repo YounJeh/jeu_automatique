@@ -6,7 +6,11 @@ import { dodgeTemplateDefinition } from "../../game/templates/dodge/dodge-templa
 import { shooterTemplateDefinition } from "../../game/templates/shooter/shooter-template.js";
 import { listGameTemplateDefinitions } from "../../game/templates/game-template-catalog.js";
 import type { GameTemplateDefinition } from "../../game/templates/game-template-definition.js";
-import { GAME_TEMPLATES } from "../../game/types/game-template.js";
+import {
+  GAME_TEMPLATES,
+  LEGACY_GAME_TEMPLATES,
+} from "../../game/types/game-template.js";
+import type { GameTemplate } from "../../game/types/game-template.js";
 import { gameDefinitionSchema } from "../../game/definition/game-definition-schema.js";
 import { isGenericRuntimeEnabled } from "../../game/core/feature-flags.js";
 import { templateMechanics } from "../../game/mechanics/template-mechanics.js";
@@ -81,7 +85,11 @@ const classifyGameTemplateStep = createStep({
   inputSchema: z.object({ prompt: z.string() }),
   outputSchema: z.object({
     prompt: z.string(),
-    template: z.enum(GAME_TEMPLATES),
+    // PHASE 10: this legacy classify -> config pipeline only knows how to
+    // generate a config for templates that have one
+    // (game-template-catalog.ts) — narrower than the full GAME_TEMPLATES,
+    // which also includes GameDefinition-only templates like "survival".
+    template: z.enum(LEGACY_GAME_TEMPLATES),
   }),
   retries: 1,
   execute: async ({ inputData, mastra }) => {
@@ -96,7 +104,7 @@ const classifyGameTemplateStep = createStep({
         `Choisis le template le plus adapté à cette demande.`,
       {
         structuredOutput: {
-          schema: z.object({ template: z.enum(GAME_TEMPLATES) }),
+          schema: z.object({ template: z.enum(LEGACY_GAME_TEMPLATES) }),
         },
       },
     );
@@ -129,7 +137,7 @@ const generateGameConfigStep = createStep({
   description: "Génère une configuration structurée pour le template choisi.",
   inputSchema: z.object({
     prompt: z.string(),
-    template: z.enum(GAME_TEMPLATES),
+    template: z.enum(LEGACY_GAME_TEMPLATES),
   }),
   outputSchema: gameConfigSchema,
   retries: 1,
@@ -292,7 +300,13 @@ const createCatalogEntryStep = createStep({
   },
 });
 
-function describeTemplateKind(template: GameConfig["template"]): string {
+// Takes the full GameTemplate, not GameConfig["template"]: this is called
+// from returnGamePreviewStep, whose inputSchema (generatedGameCatalogItemSchema)
+// is shared with the definition pipeline and therefore typed over every
+// template, even though "survival" (GameDefinition-only) can never
+// actually reach this step in practice — it has no legacy config, so it
+// never flows through classifyGameTemplateStep/generateGameConfigStep.
+function describeTemplateKind(template: GameTemplate): string {
   switch (template) {
     case "dodge":
       return "jeu d'évitement";
@@ -300,6 +314,8 @@ function describeTemplateKind(template: GameConfig["template"]): string {
       return "jeu de collecte";
     case "shooter":
       return "jeu de tir";
+    case "survival":
+      return "jeu de survie";
     default:
       return assertNever(template);
   }

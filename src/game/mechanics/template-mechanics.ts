@@ -5,4 +5,5 @@ export const templateMechanics: Record<GameTemplate, GameMechanic[]> = {
   dodge: ["move", "avoid", "timer"],
   collect: ["move", "collect", "score", "timer"],
   shooter: ["move", "shoot", "avoid", "health", "score"],
+  survival: ["move", "avoid", "health", "timer"],
 };

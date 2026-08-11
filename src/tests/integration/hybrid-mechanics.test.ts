@@ -75,8 +75,8 @@ describe("hybrid mechanics composition (move + collect + avoid)", () => {
   });
 
   it("never registers the hybrid POC as a selectable game template", () => {
-    expect(GAME_TEMPLATES).toHaveLength(3);
-    expect(GAME_TEMPLATES).toEqual(["dodge", "collect", "shooter"]);
+    expect(GAME_TEMPLATES).toHaveLength(4);
+    expect(GAME_TEMPLATES).toEqual(["dodge", "collect", "shooter", "survival"]);
     expect(GAME_TEMPLATES).not.toContain("hybrid-poc");
 
     expect(Object.keys(gameTemplateDefinitions).sort()).toEqual([
