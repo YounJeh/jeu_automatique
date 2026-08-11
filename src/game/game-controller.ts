@@ -14,6 +14,11 @@ import {
   type ShooterSprites,
 } from "./templates/shooter/shooter-renderer.js";
 import { getGameTemplateDefinition } from "./templates/game-template-catalog.js";
+import { isGenericRuntimeEnabled } from "./core/feature-flags.js";
+import { GenericRuntime } from "./core/runtime/generic-runtime.js";
+import { isGenericRuntimeCapable } from "./core/runtime/generic-runtime-capability.js";
+import { GenericRenderer } from "./core/render/generic-renderer.js";
+import type { GameTemplate } from "./types/game-template.js";
 
 type ActiveGame =
   | { template: "dodge"; engine: DodgeEngine; renderer: DodgeRenderer }
@@ -22,6 +27,11 @@ type ActiveGame =
       template: "shooter";
       engine: ShooterEngine;
       renderer: ShooterRenderer;
+    }
+  | {
+      template: GameTemplate;
+      runtime: GenericRuntime;
+      renderer: GenericRenderer;
     };
 
 export type GameControllerUpdate = {
@@ -49,6 +59,20 @@ export class GameController {
 
   loadGame(item: GameCatalogItem): void {
     this.stop();
+
+    if (
+      isGenericRuntimeEnabled() &&
+      item.definition &&
+      isGenericRuntimeCapable(item.definition)
+    ) {
+      const runtime = new GenericRuntime();
+      runtime.load(item.definition);
+      runtime.start();
+      const renderer = new GenericRenderer(this.canvas, item.definition);
+      this.active = { template: item.config.template, runtime, renderer };
+      this.start();
+      return;
+    }
 
     switch (item.config.template) {
       case "dodge": {
@@ -106,7 +130,14 @@ export class GameController {
   }
 
   restart(): void {
-    this.active?.engine.reset();
+    const active = this.active;
+    if (!active) return;
+
+    if ("runtime" in active) {
+      active.runtime.restart();
+    } else {
+      active.engine.reset();
+    }
   }
 
   private readonly tick = (time: number): void => {
@@ -116,24 +147,30 @@ export class GameController {
     const deltaMs = this.lastFrameTime === null ? 0 : time - this.lastFrameTime;
     this.lastFrameTime = time;
 
-    switch (active.template) {
-      case "dodge": {
-        const state = active.engine.update(deltaMs, this.input.getState());
-        active.renderer.draw(state);
-        this.onUpdate?.({ status: state.status, score: state.score });
-        break;
-      }
-      case "collect": {
-        const state = active.engine.update(deltaMs, this.input.getState());
-        active.renderer.draw(state);
-        this.onUpdate?.({ status: state.status, score: state.score });
-        break;
-      }
-      case "shooter": {
-        const state = active.engine.update(deltaMs, this.input.getState());
-        active.renderer.draw(state);
-        this.onUpdate?.({ status: state.status, score: state.score });
-        break;
+    if ("runtime" in active) {
+      const state = active.runtime.update(deltaMs, this.input.getState());
+      active.renderer.draw(state);
+      this.onUpdate?.({ status: state.status, score: state.score });
+    } else {
+      switch (active.template) {
+        case "dodge": {
+          const state = active.engine.update(deltaMs, this.input.getState());
+          active.renderer.draw(state);
+          this.onUpdate?.({ status: state.status, score: state.score });
+          break;
+        }
+        case "collect": {
+          const state = active.engine.update(deltaMs, this.input.getState());
+          active.renderer.draw(state);
+          this.onUpdate?.({ status: state.status, score: state.score });
+          break;
+        }
+        case "shooter": {
+          const state = active.engine.update(deltaMs, this.input.getState());
+          active.renderer.draw(state);
+          this.onUpdate?.({ status: state.status, score: state.score });
+          break;
+        }
       }
     }
 
