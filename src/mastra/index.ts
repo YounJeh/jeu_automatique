@@ -25,6 +25,12 @@ export const mastra = new Mastra({
         method: "GET",
         handler: serveFrontendFile,
       }),
+      // Sert public/assets/** (catalogue de sprites, PHASE 9 — CLAUDE.md
+      // §16.3). Même handler/convention que "/dist/*" ci-dessus.
+      registerApiRoute("/assets/*", {
+        method: "GET",
+        handler: serveFrontendFile,
+      }),
       generateGameRoute,
     ],
   },
