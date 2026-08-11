@@ -1,11 +1,15 @@
+import { getAssetById } from "../../assets/asset-catalog.js";
 import type { AppearanceDefinition } from "../../definition/appearance-definition-schema.js";
 import type { GameDefinition } from "../../definition/game-definition-schema.js";
 import type { RuntimeState } from "../runtime/runtime-state.js";
 
 // PHASE 7: canvas renderer driven entirely by a GameDefinition + the
-// RuntimeState produced by GenericRuntime. Only appearance.type === "shape"
-// exists in the schema so far (the "sprite" variant is PHASE 9) — no
-// emoji-sprite branch here, unlike the legacy per-template renderers.
+// RuntimeState produced by GenericRuntime.
+//
+// PHASE 9: appearance.type === "sprite" always draws its catalog
+// fallbackColor for now — real image loading with a SpriteCache lands in
+// the next increment. This keeps the union exhaustive and the renderer
+// compilable/safe at every intermediate step (never blank, never throws).
 export class GenericRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly definition: GameDefinition;
@@ -73,6 +77,13 @@ export class GenericRenderer {
     y: number,
     size: number,
   ): void {
+    if (appearance.type === "sprite") {
+      this.ctx.fillStyle =
+        getAssetById(appearance.assetId)?.fallbackColor ?? "#888888";
+      this.ctx.fillRect(x, y, size, size);
+      return;
+    }
+
     this.ctx.fillStyle = appearance.color;
 
     switch (appearance.shape) {

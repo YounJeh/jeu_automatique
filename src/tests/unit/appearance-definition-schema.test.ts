@@ -29,11 +29,30 @@ describe("appearanceDefinitionSchema", () => {
     ).toBe(true);
   });
 
-  it("rejects a sprite variant (deferred to PHASE 9)", () => {
+  it("accepts a sprite variant with a known assetId", () => {
+    expect(
+      appearanceDefinitionSchema.safeParse({
+        type: "sprite",
+        assetId: "crystal-purple",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a sprite variant with an assetId outside the catalog", () => {
     expect(
       appearanceDefinitionSchema.safeParse({
         type: "sprite",
         assetId: "spaceship-blue",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a sprite variant carrying shape-only fields", () => {
+    expect(
+      appearanceDefinitionSchema.safeParse({
+        type: "sprite",
+        assetId: "crystal-purple",
+        color: "#000",
       }).success,
     ).toBe(false);
   });
