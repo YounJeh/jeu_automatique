@@ -1,5 +1,32 @@
 import type { InputState, Vector2 } from "../../core/game-state.js";
 
+/**
+ * PHASE 10: one step of an entity moving toward `target` (e.g. the
+ * player) at `speed` px/s, used by the "seek" movementPattern. Distance
+ * zero (already on target) returns the position unchanged rather than
+ * dividing by zero.
+ */
+export function computeSeekStep(
+  position: Vector2,
+  target: Vector2,
+  speed: number,
+  deltaMs: number,
+): Vector2 {
+  const dx = target.x - position.x;
+  const dy = target.y - position.y;
+  const distance = Math.hypot(dx, dy);
+
+  if (distance === 0) {
+    return { x: position.x, y: position.y };
+  }
+
+  const step = (speed * deltaMs) / 1000;
+  return {
+    x: position.x + (dx / distance) * step,
+    y: position.y + (dy / distance) * step,
+  };
+}
+
 export type MovementBounds = {
   width: number;
   height: number;
