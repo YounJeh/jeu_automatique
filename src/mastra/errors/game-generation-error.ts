@@ -7,7 +7,10 @@ export type GameGenerationErrorCode =
   | "SEMANTIC_VALIDATION_FAILED"
   | "PLAYABILITY_VALIDATION_FAILED"
   | "SAVE_FAILED"
-  | "GAME_INITIALIZATION_FAILED";
+  | "GAME_INITIALIZATION_FAILED"
+  // PHASE 7: GameDefinition-first generation (inferGameDefinitionStep).
+  | "INVALID_GAME_DEFINITION"
+  | "REPAIR_FAILED";
 
 export class GameGenerationError extends Error {
   readonly code: GameGenerationErrorCode;
