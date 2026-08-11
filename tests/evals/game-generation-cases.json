@@ -52,6 +52,25 @@
     }
   },
   {
+    "id": "survival-simple",
+    "prompt": "Crée un jeu où je dois survivre 30 secondes à un poursuivant qui me traque sans relâche.",
+    "expected": {
+      "schemaValid": true,
+      "semanticValid": true,
+      "playabilityValid": true,
+      "mechanics": ["move", "avoid", "health", "timer"],
+      "goalTypes": ["survive"],
+      "runtimeLoads": true,
+      "repaired": false,
+      "usedFallbackPreset": false
+    },
+    "expectedSimulation": {
+      "runs": 20,
+      "seed": 1,
+      "maxRuntimeErrors": 0
+    }
+  },
+  {
     "id": "hybrid-collect-avoid",
     "prompt": "Crée un jeu où je collecte des cristaux tout en évitant des météorites.",
     "expected": {

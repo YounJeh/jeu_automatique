@@ -21,6 +21,7 @@ import { dodgeGameDefinitionExample } from "../../game/definition/examples/dodge
 import { dodgePreset } from "../../game/presets/dodge.js";
 import { collectPreset } from "../../game/presets/collect.js";
 import { shooterPreset } from "../../game/presets/shooter.js";
+import { survivalPreset } from "../../game/presets/survival.js";
 
 const DATASET_PATH = new URL(
   "../../../tests/evals/game-generation-cases.json",
@@ -111,6 +112,7 @@ const MOCK_RESPONSES: Record<string, (GameDefinition | undefined)[]> = {
   "dodge-simple": [dodgePreset.definition],
   "collect-simple": [collectPreset.definition],
   "shooter-simple": [shooterPreset.definition],
+  "survival-simple": [survivalPreset.definition],
   "hybrid-collect-avoid": [hybridDefinition],
   "ambiguous-request": [invalidDefinition, invalidDefinition],
   "impossible-request": [invalidDefinition, invalidDefinition],
