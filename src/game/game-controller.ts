@@ -69,9 +69,17 @@ export class GameController {
       runtime.load(item.definition);
       runtime.start();
       const renderer = new GenericRenderer(this.canvas, item.definition);
-      this.active = { template: item.config.template, runtime, renderer };
+      this.active = { template: item.template, runtime, renderer };
       this.start();
       return;
+    }
+
+    if (!item.config) {
+      throw new Error(
+        `"${item.id}" n'a pas de configuration jouable : ni le moteur générique ` +
+          "(désactivé, ou définition incompatible) ni le moteur legacy " +
+          "(aucun config) ne peuvent le charger.",
+      );
     }
 
     switch (item.config.template) {

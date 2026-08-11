@@ -7,11 +7,14 @@ export type GameCatalogItem = {
   title: string;
   description: string;
   template: GameTemplate;
-  config: GameConfig;
-  // PHASE 7: optional GameDefinition counterpart, used by GameController
-  // to route to GenericRuntime when GENERIC_RUNTIME_ENABLED is set and
-  // isGenericRuntimeCapable(definition) is true. Absent for items that
-  // predate PHASE 7.
+  // PHASE 7: built-in items carry both; a generated item carries exactly
+  // one of the two (legacy classify->config pipeline, or the
+  // mechanics->GameDefinition pipeline, Task 10/11 — see
+  // generatedGameCatalogItemSchema, which enforces this at the boundary).
+  // GameController falls back to the legacy per-template engine only when
+  // config is present; a definition-only item must be
+  // isGenericRuntimeCapable().
+  config?: GameConfig;
   definition?: GameDefinition;
   source: "built-in" | "generated";
   createdAt?: string;

@@ -19,8 +19,7 @@ describe("builtInGames", () => {
 
   it("leaves the legacy config field untouched", () => {
     for (const game of builtInGames) {
-      expect(game.config).toBeDefined();
-      expect(game.config.template).toBe(game.template);
+      expect(game.config?.template).toBe(game.template);
     }
   });
 });

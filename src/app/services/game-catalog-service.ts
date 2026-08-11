@@ -12,6 +12,16 @@ export function listGames(): GameCatalogItem[] {
 export function saveGeneratedGame(
   result: GeneratedGameResult,
 ): GameCatalogItem {
+  if (!result.game) {
+    // PHASE 7 Task 11 wires the mechanics -> GameDefinition pipeline
+    // through to the frontend; until then every real result carries
+    // "game" (the legacy classify -> config pipeline), never only
+    // "definition" — see generatedGameResultSchema's refine.
+    throw new Error(
+      'Résultat généré sans "game" : pipeline GameDefinition pas encore câblé côté frontend.',
+    );
+  }
+
   const item: GameCatalogItem = {
     id: result.game.id,
     title: result.game.title,
