@@ -9,7 +9,13 @@ import type { GameTemplateDefinition } from "../../game/templates/game-template-
 import { GAME_TEMPLATES } from "../../game/types/game-template.js";
 import { gameDefinitionSchema } from "../../game/definition/game-definition-schema.js";
 import { isGenericRuntimeEnabled } from "../../game/core/feature-flags.js";
+import { templateMechanics } from "../../game/mechanics/template-mechanics.js";
 import { GameGenerationError } from "../errors/game-generation-error.js";
+import {
+  buildDefinitionGenerationLogRecord,
+  buildLegacyGenerationLogRecord,
+  logGeneration,
+} from "../observability/generation-log.js";
 import { saveGeneratedGameTool } from "../tools/save-generated-game-tool.js";
 import { collectGameConfigSchema } from "../schemas/collect-game-config-schema.js";
 import { dodgeGameConfigSchema } from "../schemas/dodge-game-config-schema.js";
@@ -265,15 +271,25 @@ const createCatalogEntryStep = createStep({
     "Construit l'entrée de catalogue à partir de la configuration validée.",
   inputSchema: gameConfigSchema,
   outputSchema: generatedGameCatalogItemSchema,
-  execute: async ({ inputData }) => ({
-    id: inputData.id,
-    title: inputData.title,
-    description: inputData.description,
-    template: inputData.template,
-    source: "generated" as const,
-    config: inputData,
-    createdAt: new Date().toISOString(),
-  }),
+  execute: async ({ inputData }) => {
+    logGeneration(
+      buildLegacyGenerationLogRecord({
+        generationId: randomUUID(),
+        gameId: inputData.id,
+        mechanics: templateMechanics[inputData.template],
+      }),
+    );
+
+    return {
+      id: inputData.id,
+      title: inputData.title,
+      description: inputData.description,
+      template: inputData.template,
+      source: "generated" as const,
+      config: inputData,
+      createdAt: new Date().toISOString(),
+    };
+  },
 });
 
 function describeTemplateKind(template: GameConfig["template"]): string {
@@ -324,15 +340,29 @@ const createDefinitionCatalogEntryStep = createStep({
     usedFallbackPreset: z.boolean(),
   }),
   outputSchema: generatedGameCatalogItemSchema,
-  execute: async ({ inputData }) => ({
-    id: `generated-${randomUUID()}`,
-    title: inputData.definition.metadata.title,
-    description: inputData.definition.metadata.description,
-    template: inputData.template,
-    source: "generated" as const,
-    definition: inputData.definition,
-    createdAt: new Date().toISOString(),
-  }),
+  execute: async ({ inputData }) => {
+    const id = `generated-${randomUUID()}`;
+
+    logGeneration(
+      buildDefinitionGenerationLogRecord({
+        generationId: randomUUID(),
+        gameId: id,
+        definition: inputData.definition,
+        repaired: inputData.repaired,
+        usedFallbackPreset: inputData.usedFallbackPreset,
+      }),
+    );
+
+    return {
+      id,
+      title: inputData.definition.metadata.title,
+      description: inputData.definition.metadata.description,
+      template: inputData.template,
+      source: "generated" as const,
+      definition: inputData.definition,
+      createdAt: new Date().toISOString(),
+    };
+  },
 });
 
 const returnGameDefinitionPreviewStep = createStep({
